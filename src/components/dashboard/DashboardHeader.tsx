@@ -28,20 +28,6 @@ export const DashboardHeader = ({ onLogout, userName = "Team Member" }: Dashboar
               </h1>
             </div>
             
-            <nav className="hidden md:flex space-x-6">
-              <a href="#" className="text-foreground hover:text-primary font-medium transition-colors">
-                Dashboard
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground font-medium transition-colors">
-                Deals
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground font-medium transition-colors">
-                Vaste Kosten
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground font-medium transition-colors">
-                Cashflow
-              </a>
-            </nav>
           </div>
 
           {/* Right side actions */}
