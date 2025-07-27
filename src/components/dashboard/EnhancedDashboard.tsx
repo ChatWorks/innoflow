@@ -156,9 +156,13 @@ export const EnhancedDashboard = () => {
           </TabsList>
 
           <TabsContent value="overview">
-            {/* Simplified Cashflow and Recent Data */}
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
+            {/* Simplified Cashflow - Full Width */}
+            <div className="mb-8">
               <SimplifiedCashflowWidget />
+            </div>
+            
+            {/* Recent Deals - Below Cashflow */}
+            <div className="mb-8">
               <RecentDeals 
                 deals={data.deals.slice(0, 5)} 
                 onDealsUpdate={handleDealsUpdate}
