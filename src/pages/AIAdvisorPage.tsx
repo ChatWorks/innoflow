@@ -27,19 +27,21 @@ export const AIAdvisorPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background">
       <DashboardHeader onLogout={signOut} userName={user?.email?.split("@")[0]} />
-      <div className="flex-1 flex overflow-hidden">
-        <ModernChatInterface
-          context={{
-            monthlyIncome: metrics.monthlyIncome,
-            monthlyExpenses: metrics.monthlyExpenses,
-            netCashflow: metrics.netCashflow,
-            pipelineValue: metrics.pendingValue,
-            activeDeals: data.deals.filter(deal => deal.status !== 'paid').length,
-            fixedCosts: data.fixedCosts.length
-          }}
-        />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="h-[calc(100vh-12rem)] overflow-hidden rounded-lg border border-border bg-card">
+          <ModernChatInterface
+            context={{
+              monthlyIncome: metrics.monthlyIncome,
+              monthlyExpenses: metrics.monthlyExpenses,
+              netCashflow: metrics.netCashflow,
+              pipelineValue: metrics.pendingValue,
+              activeDeals: data.deals.filter(deal => deal.status !== 'paid').length,
+              fixedCosts: data.fixedCosts.length
+            }}
+          />
+        </div>
       </div>
     </div>
   );
