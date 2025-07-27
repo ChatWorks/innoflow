@@ -65,7 +65,7 @@ export const MetricCard = ({
       </CardHeader>
       <CardContent>
         <div className="flex items-baseline justify-between">
-          <div className={cn("metric-value", getValueColor())}>
+          <div className="text-2xl font-bold mt-1">
             {value}
           </div>
           {change && (
