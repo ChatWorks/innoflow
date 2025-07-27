@@ -90,8 +90,10 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
       }
 
       // If it's a recurring deal and status became confirmed/paid, create/update recurring revenue entry
-      if (formData.deal_type === "recurring" && (formData.status === "confirmed" || formData.status === "paid")) {
-        await upsertRecurringRevenueEntry(deal.id, parseFloat(formData.monthly_amount), formData.start_date, parseInt(formData.contract_length));
+      if (formData.deal_type === "recurring" && (formData.status === "confirmed" || formData.status === "paid") && formData.monthly_amount) {
+        const contractLength = formData.contract_length ? parseInt(formData.contract_length) : null;
+        const startDate = formData.start_date || new Date().toISOString().split('T')[0];
+        await upsertRecurringRevenueEntry(deal.id, parseFloat(formData.monthly_amount), startDate, contractLength);
       }
 
       const { error } = await supabase
@@ -140,10 +142,13 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
     }
   };
 
-  const upsertRecurringRevenueEntry = async (dealId: string, monthlyAmount: number, startDate: string, contractLength: number) => {
+  const upsertRecurringRevenueEntry = async (dealId: string, monthlyAmount: number, startDate: string, contractLength: number | null) => {
     try {
-      const endDate = new Date(startDate);
-      endDate.setMonth(endDate.getMonth() + contractLength);
+      const endDate = contractLength ? (() => {
+        const date = new Date(startDate);
+        date.setMonth(date.getMonth() + contractLength);
+        return date.toISOString().split('T')[0];
+      })() : null;
 
       const { error } = await supabase
         .from("recurring_revenue")
@@ -151,7 +156,7 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
           deal_id: dealId,
           monthly_amount: monthlyAmount,
           start_date: startDate,
-          end_date: endDate.toISOString().split('T')[0],
+          end_date: endDate,
           is_active: true
         }, { onConflict: 'deal_id' });
 
@@ -226,7 +231,7 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
           {formData.deal_type === "recurring" && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="monthly_amount">Maandelijks Bedrag (€)</Label>
+                <Label htmlFor="monthly_amount">Maandelijks Bedrag (€) *</Label>
                 <Input
                   id="monthly_amount"
                   type="number"
@@ -246,8 +251,8 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
                     type="date"
                     value={formData.start_date}
                     onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
-                    required
                   />
+                  <p className="text-xs text-muted-foreground">Optioneel - gebruikt voor projecties</p>
                 </div>
 
                 <div className="space-y-2">
@@ -258,8 +263,8 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
                     value={formData.contract_length}
                     onChange={(e) => setFormData(prev => ({ ...prev, contract_length: e.target.value }))}
                     min="1"
-                    required
                   />
+                  <p className="text-xs text-muted-foreground">Laat leeg voor onbepaalde tijd</p>
                 </div>
               </div>
             </>

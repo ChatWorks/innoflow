@@ -173,12 +173,20 @@ export const RecentDeals = ({ deals, onViewDeal, onEditDeal, onDealsUpdate }: Re
 
   const handleDeleteDeal = async (dealId: string) => {
     try {
-      const { error } = await supabase
+      console.log('Attempting to delete deal with ID:', dealId);
+      
+      const { error, data } = await supabase
         .from("deals")
         .delete()
-        .eq("id", dealId);
+        .eq("id", dealId)
+        .select();
 
-      if (error) throw error;
+      console.log('Delete result:', { error, data });
+
+      if (error) {
+        console.error('Supabase delete error:', error);
+        throw error;
+      }
 
       toast({
         title: "Deal verwijderd",
@@ -190,7 +198,7 @@ export const RecentDeals = ({ deals, onViewDeal, onEditDeal, onDealsUpdate }: Re
       console.error("Error deleting deal:", error);
       toast({
         title: "Fout",
-        description: "Kon deal niet verwijderen.",
+        description: `Kon deal niet verwijderen: ${error.message}`,
         variant: "destructive",
       });
     }
