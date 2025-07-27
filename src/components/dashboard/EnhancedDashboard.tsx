@@ -7,7 +7,6 @@ import { FixedCostsList } from "./FixedCostsList";
 import { TimeFilter, TimePeriod } from "./TimeFilter";
 import { AddFixedCostModal } from "./AddFixedCostModal";
 import { AddDealModal } from "./AddDealModal";
-import { MrrWidget } from "./MrrWidget";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { EnhancedCashflowChart } from "./EnhancedCashflowChart";
 import { useAuth } from "@/hooks/useAuth";
@@ -146,12 +145,6 @@ export const EnhancedDashboard = () => {
           />
         </div>
 
-        {/* MRR Widget - moved to smaller position */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-          <div className="lg:col-span-3">
-            <MrrWidget />
-          </div>
-        </div>
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
