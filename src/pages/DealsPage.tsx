@@ -6,7 +6,7 @@ import { DealCard } from "@/components/deals/DealCard";
 import { DealFilters } from "@/components/deals/DealFilters";
 import { EmptyDealsState } from "@/components/deals/EmptyDealsState";
 import { DealsLoadingSkeleton } from "@/components/deals/DealsLoadingSkeleton";
-import { useDashboardData } from "@/hooks/useDashboardData";
+import { useDeals } from "@/hooks/useDeals";
 import { useAuth } from "@/hooks/useAuth";
 
 interface Deal {
@@ -25,8 +25,7 @@ interface Deal {
 
 export const DealsPage = () => {
   const { user, signOut } = useAuth();
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const { data, loading, refetch } = useDashboardData("month", currentDate);
+  const { deals, loading, refetch } = useDeals();
   
   // Filter and view states
   const [searchTerm, setSearchTerm] = useState("");
@@ -41,7 +40,7 @@ export const DealsPage = () => {
 
   // Filter and sort deals
   const filteredAndSortedDeals = useMemo(() => {
-    let filtered = [...(data.deals || [])];
+    let filtered = [...(deals || [])];
 
     // Apply search filter
     if (searchTerm) {
@@ -81,7 +80,7 @@ export const DealsPage = () => {
     });
 
     return filtered;
-  }, [data.deals, searchTerm, statusFilter, sortBy, sortOrder]);
+  }, [deals, searchTerm, statusFilter, sortBy, sortOrder]);
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -125,10 +124,10 @@ export const DealsPage = () => {
           </div>
         </div>
 
-        {data.deals && data.deals.length > 0 ? (
+        {deals && deals.length > 0 ? (
           <>
             {/* Statistics */}
-            <DealStatistics deals={data.deals} onDealsUpdate={handleDealsUpdate} />
+            <DealStatistics deals={deals} onDealsUpdate={handleDealsUpdate} />
 
             {/* Filters */}
             <DealFilters
@@ -142,7 +141,7 @@ export const DealsPage = () => {
               onSortOrderChange={setSortOrder}
               viewMode={viewMode}
               onViewModeChange={setViewMode}
-              totalDeals={data.deals.length}
+              totalDeals={deals.length}
               filteredDeals={filteredAndSortedDeals.length}
             />
 
