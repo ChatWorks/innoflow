@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Calendar, LogOut, Settings, User } from "lucide-react";
+import { Calendar, LogOut, Settings, User, Target } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useNavigate, useLocation } from "react-router-dom";
 interface DashboardHeaderProps {
@@ -50,6 +51,16 @@ export const DashboardHeader = ({
                 }`}
               >
                 Vaste Kosten
+              </button>
+              <button 
+                onClick={() => navigate("/goals")} 
+                className={`font-medium transition-colors flex items-center gap-2 ${
+                  location.pathname === "/goals" ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Target className="w-4 h-4" />
+                Goals
+                {/* Badge for at-risk goals - would be populated from goals hook */}
               </button>
               <button 
                 onClick={() => navigate("/ai-advisor")} 

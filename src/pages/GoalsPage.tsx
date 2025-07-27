@@ -1,0 +1,205 @@
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Target, TrendingUp, Plus, Filter, BarChart3 } from 'lucide-react';
+import { useGoals, Goal } from '@/hooks/useGoals';
+import { GoalStats } from '@/components/goals/GoalStats';
+import { GoalCard } from '@/components/goals/GoalCard';
+import { CreateGoalModal } from '@/components/goals/CreateGoalModal';
+import { Skeleton } from '@/components/ui/skeleton';
+
+export const GoalsPage = () => {
+  const { goals, loading, stats, createGoal, updateGoal, deleteGoal } = useGoals();
+  const [activeTab, setActiveTab] = useState('all');
+
+  const filteredGoals = goals.filter(goal => {
+    switch (activeTab) {
+      case 'active': return goal.status === 'active';
+      case 'completed': return goal.status === 'completed';
+      case 'at-risk': {
+        const progress = goal.target_value > 0 ? (goal.current_value / goal.target_value) * 100 : 0;
+        const daysToDeadline = Math.ceil((new Date(goal.deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        return goal.status === 'active' && (daysToDeadline < 7 && progress < 80);
+      }
+      default: return goal.status !== 'archived';
+    }
+  });
+
+  const handleEditGoal = (goal: Goal) => {
+    // For now, just a placeholder - would open edit modal
+    console.log('Edit goal:', goal);
+  };
+
+  const handleArchiveGoal = async (goalId: string) => {
+    await updateGoal(goalId, { status: 'archived' });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8 space-y-8">
+          {/* Header Skeleton */}
+          <div className="space-y-4">
+            <Skeleton className="h-10 w-64" />
+            <Skeleton className="h-6 w-96" />
+          </div>
+          
+          {/* Stats Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full" />
+            ))}
+          </div>
+          
+          {/* Goals Grid Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <Skeleton key={i} className="h-64 w-full" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8 space-y-8">
+        {/* Header */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <h1 className="text-4xl font-bold tracking-tight flex items-center gap-3">
+                <Target className="h-8 w-8 text-primary" />
+                Goals & Targets
+              </h1>
+              <p className="text-lg text-muted-foreground">
+                Track your progress and achieve your business objectives
+              </p>
+            </div>
+            <CreateGoalModal onCreateGoal={createGoal} />
+          </div>
+          
+          <Separator />
+        </div>
+
+        {/* Stats Overview */}
+        <GoalStats stats={stats} />
+
+        {/* Goals Section */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                Jouw Doelstellingen
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                {stats.atRisk > 0 && (
+                  <Badge variant="destructive" className="text-xs">
+                    {stats.atRisk} risico
+                  </Badge>
+                )}
+                <Button variant="outline" size="sm">
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filter
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          
+          <CardContent>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="all">
+                  Alle ({goals.filter(g => g.status !== 'archived').length})
+                </TabsTrigger>
+                <TabsTrigger value="active">
+                  Actief ({goals.filter(g => g.status === 'active').length})
+                </TabsTrigger>
+                <TabsTrigger value="at-risk">
+                  Risico ({stats.atRisk})
+                </TabsTrigger>
+                <TabsTrigger value="completed">
+                  Voltooid ({stats.completed})
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value={activeTab} className="space-y-6">
+                {filteredGoals.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">
+                      {activeTab === 'all' ? 'Geen doelen gevonden' : 
+                       activeTab === 'active' ? 'Geen actieve doelen' :
+                       activeTab === 'at-risk' ? 'Geen doelen met risico' :
+                       'Geen voltooide doelen'}
+                    </h3>
+                    <p className="text-muted-foreground mb-4">
+                      {activeTab === 'all' 
+                        ? 'Begin met het aanmaken van je eerste doel'
+                        : 'Start een nieuw doel om je voortgang te volgen'
+                      }
+                    </p>
+                    {activeTab === 'all' && (
+                      <CreateGoalModal onCreateGoal={createGoal} />
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredGoals.map((goal) => (
+                      <GoalCard
+                        key={goal.id}
+                        goal={goal}
+                        onEdit={handleEditGoal}
+                        onDelete={deleteGoal}
+                        onArchive={handleArchiveGoal}
+                      />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+
+        {/* Insights Card */}
+        {goals.length > 0 && (
+          <Card className="bg-gradient-to-r from-primary/5 to-secondary/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Goal Insights
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <h4 className="font-medium">Deze maand</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Je hebt {stats.completed} doelen voltooid en {stats.onTrack} staan op schema.
+                    {stats.atRisk > 0 && ` Let op ${stats.atRisk} doelen die aandacht nodig hebben.`}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-medium">Aanbeveling</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {stats.overallScore >= 80 
+                      ? 'Geweldig werk! Je bent op koers om je doelen te behalen.'
+                      : stats.overallScore >= 60
+                      ? 'Focus op de doelen met het hoogste risico voor maximale impact.'
+                      : 'Overweeg je doelen aan te passen of extra acties te ondernemen.'
+                    }
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+};
