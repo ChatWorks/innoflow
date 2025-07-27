@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Calendar, LogOut, Settings, User } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useNavigate, useLocation } from "react-router-dom";
 interface DashboardHeaderProps {
   onLogout?: () => void;
   userName?: string;
@@ -9,6 +10,8 @@ export const DashboardHeader = ({
   onLogout,
   userName = "Team Member"
 }: DashboardHeaderProps) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   return <header className="bg-card border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
@@ -24,18 +27,38 @@ export const DashboardHeader = ({
             </div>
             
             <nav className="hidden md:flex space-x-6">
-              <a href="#" className="text-foreground hover:text-primary font-medium transition-colors">
+              <button 
+                onClick={() => navigate("/")} 
+                className={`font-medium transition-colors ${
+                  location.pathname === "/" ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
                 Dashboard
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground font-medium transition-colors">
+              </button>
+              <button 
+                onClick={() => navigate("/deals")} 
+                className={`font-medium transition-colors ${
+                  location.pathname === "/deals" ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
                 Deals
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground font-medium transition-colors">
+              </button>
+              <button 
+                onClick={() => navigate("/fixed-costs")} 
+                className={`font-medium transition-colors ${
+                  location.pathname === "/fixed-costs" ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
                 Vaste Kosten
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground font-medium transition-colors">
-                Cashflow
-              </a>
+              </button>
+              <button 
+                onClick={() => navigate("/ai-advisor")} 
+                className={`font-medium transition-colors ${
+                  location.pathname === "/ai-advisor" ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                AI Advies
+              </button>
             </nav>
           </div>
 
