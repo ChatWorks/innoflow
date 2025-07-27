@@ -175,22 +175,45 @@ export const RecentDeals = ({ deals, onViewDeal, onEditDeal, onDealsUpdate }: Re
     try {
       console.log('Attempting to delete deal with ID:', dealId);
       
-      const { error, data } = await supabase
+      // First delete related cashflow entries
+      const { error: cashflowError } = await supabase
+        .from("cashflow_entries")
+        .delete()
+        .eq("deal_id", dealId);
+
+      if (cashflowError) {
+        console.error('Error deleting cashflow entries:', cashflowError);
+        throw new Error(`Fout bij verwijderen cashflow entries: ${cashflowError.message}`);
+      }
+
+      // Then delete related recurring revenue entries
+      const { error: recurringError } = await supabase
+        .from("recurring_revenue")
+        .delete()
+        .eq("deal_id", dealId);
+
+      if (recurringError) {
+        console.error('Error deleting recurring revenue:', recurringError);
+        throw new Error(`Fout bij verwijderen recurring revenue: ${recurringError.message}`);
+      }
+
+      // Finally delete the deal itself
+      const { error: dealError, data } = await supabase
         .from("deals")
         .delete()
         .eq("id", dealId)
         .select();
 
-      console.log('Delete result:', { error, data });
+      console.log('Delete result:', { error: dealError, data });
 
-      if (error) {
-        console.error('Supabase delete error:', error);
-        throw error;
+      if (dealError) {
+        console.error('Supabase delete error:', dealError);
+        throw new Error(`Fout bij verwijderen deal: ${dealError.message}`);
       }
 
       toast({
         title: "Deal verwijderd",
-        description: "De deal is succesvol verwijderd.",
+        description: "De deal en alle gerelateerde data zijn succesvol verwijderd.",
       });
 
       onDealsUpdate?.();
