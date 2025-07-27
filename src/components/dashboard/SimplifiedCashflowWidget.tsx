@@ -1,8 +1,6 @@
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TimeRangeSelector, TimePeriodType } from "./TimeRangeSelector";
-import { useEnhancedCashflowData } from "@/hooks/useEnhancedCashflowData";
+import { TimePeriod } from "@/components/dashboard/TimeFilter";
 import { 
   LineChart, 
   Line, 
@@ -16,15 +14,39 @@ import {
 import { TrendingUp, TrendingDown, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface SimplifiedCashflowWidgetProps {
-  className?: string;
+interface DashboardMetrics {
+  monthlyIncome: number;
+  monthlyExpenses: number;
+  pendingValue: number;
+  netCashflow: number;
+  previousIncome: number;
+  previousExpenses: number;
+  previousPending: number;
+  previousNetCashflow: number;
 }
 
-export const SimplifiedCashflowWidget = ({ className }: SimplifiedCashflowWidgetProps) => {
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [periodType, setPeriodType] = useState<TimePeriodType>("month");
-  const { data, loading, summary } = useEnhancedCashflowData(periodType, selectedDate);
+interface CashflowDataPoint {
+  month: string;
+  income: number;
+  expenses: number;
+  netCashflow: number;
+}
 
+interface SimplifiedCashflowWidgetProps {
+  className?: string;
+  period: TimePeriod;
+  currentDate: Date;
+  metrics: DashboardMetrics;
+  cashflowData: CashflowDataPoint[];
+}
+
+export const SimplifiedCashflowWidget = ({ 
+  className, 
+  period, 
+  currentDate, 
+  metrics, 
+  cashflowData 
+}: SimplifiedCashflowWidgetProps) => {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('nl-NL', {
       style: 'currency',
@@ -34,71 +56,42 @@ export const SimplifiedCashflowWidget = ({ className }: SimplifiedCashflowWidget
     }).format(value);
   };
 
-  const formatAxisLabel = (value: string, data?: any) => {
-    if (data && data.period) {
-      return data.period;
-    }
-    
-    // Fallback formatting based on period type
-    const date = new Date(value);
-    switch (periodType) {
-      case "day":
-        return date.getDate().toString();
-      case "month":
-        return date.toLocaleDateString('nl-NL', { month: 'short' });
-      case "quarter":
-        const quarter = Math.floor(date.getMonth() / 3) + 1;
-        return `Q${quarter}`;
-      case "year":
-        return date.getFullYear().toString();
-      default:
-        return date.getDate().toString();
-    }
-  };
-
   const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-card border border-border rounded-lg shadow-lg p-3">
-          <p className="font-medium text-card-foreground mb-2">{label}</p>
-          <div className="space-y-1 text-sm">
-            <div className="flex justify-between gap-4">
-              <span className="text-success">Inkomsten:</span>
-              <span className="font-medium">{formatCurrency(data.deals)}</span>
-            </div>
-            <div className="flex justify-between gap-4">
-              <span className="text-destructive">Vaste Kosten:</span>
-              <span className="font-medium">{formatCurrency(data.fixedCosts)}</span>
-            </div>
-            <div className="flex justify-between gap-4 border-t pt-1">
-              <span className="text-foreground">Netto:</span>
-              <span className={cn("font-medium", data.total >= 0 ? "text-success" : "text-destructive")}>
-                {formatCurrency(data.total)}
-              </span>
-            </div>
+    if (!active || !payload || !payload.length) return null;
+
+    return (
+      <div className="bg-card border border-border rounded-lg shadow-lg p-4 min-w-[200px]">
+        <p className="font-semibold text-foreground mb-2">{label}</p>
+        {payload.map((entry: any, index: number) => (
+          <div key={index} className="flex items-center gap-2 mb-1">
+            <div 
+              className="w-3 h-3 rounded-full" 
+              style={{ backgroundColor: entry.color }}
+            />
+            <span className="text-sm text-muted-foreground capitalize">
+              {entry.dataKey === 'income' ? 'Inkomsten' : 
+               entry.dataKey === 'expenses' ? 'Vaste Kosten' : 'Netto'}:
+            </span>
+            <span className="font-medium text-foreground ml-auto">
+              {formatCurrency(entry.value)}
+            </span>
           </div>
-        </div>
-      );
-    }
-    return null;
+        ))}
+      </div>
+    );
   };
 
-  if (loading) {
+  if (!cashflowData || cashflowData.length === 0) {
     return (
-      <Card className={cn("col-span-1 lg:col-span-2", className)}>
+      <Card className={cn("", className)}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Dagelijkse Cashflow
+            📊 Cashflow Overzicht
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] flex items-center justify-center">
-            <div className="text-center">
-              <div className="h-6 w-6 animate-spin border-2 border-primary border-t-transparent rounded-full mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Laden...</p>
-            </div>
+          <div className="text-center py-8 text-muted-foreground">
+            Geen cashflow data beschikbaar
           </div>
         </CardContent>
       </Card>
@@ -106,117 +99,84 @@ export const SimplifiedCashflowWidget = ({ className }: SimplifiedCashflowWidget
   }
 
   return (
-    <Card className={cn("col-span-1 lg:col-span-2", className)}>
+    <Card className={cn("shadow-lg border-0 bg-gradient-to-br from-card to-card/80", className)}>
       <CardHeader className="pb-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Cashflow Overzicht
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              <Badge 
-                variant={summary.totalNet >= 0 ? "default" : "destructive"}
-                className="text-xs"
-              >
-                {summary.totalNet >= 0 ? (
-                  <TrendingUp className="h-3 w-3 mr-1" />
-                ) : (
-                  <TrendingDown className="h-3 w-3 mr-1" />
-                )}
-                {summary.totalNet >= 0 ? "Positief" : "Negatief"}
-              </Badge>
-              <span className="text-sm text-muted-foreground">
-                Totaal: {formatCurrency(summary.totalNet)}
-              </span>
-            </div>
-          </div>
-          
-          <TimeRangeSelector
-            period={periodType}
-            onPeriodChange={setPeriodType}
-            selectedDate={selectedDate}
-            onDateChange={setSelectedDate}
-          />
-        </div>
-
-        {/* Summary Cards */}
-        <div className="grid grid-cols-3 gap-4 mt-4">
-          <div className="text-center p-3 bg-success/10 rounded-lg">
-            <p className="text-xs text-muted-foreground">Totale Inkomsten</p>
-            <p className="text-lg font-semibold text-success">{formatCurrency(summary.totalDeals)}</p>
-          </div>
-          <div className="text-center p-3 bg-destructive/10 rounded-lg">
-            <p className="text-xs text-muted-foreground">Vaste Kosten</p>
-            <p className="text-lg font-semibold text-destructive">{formatCurrency(summary.totalFixedCosts)}</p>
-          </div>
-          <div className="text-center p-3 bg-primary/10 rounded-lg">
-            <p className="text-xs text-muted-foreground">Netto Resultaat</p>
-            <p className={cn("text-lg font-semibold", summary.totalNet >= 0 ? "text-success" : "text-destructive")}>
-              {formatCurrency(summary.totalNet)}
-            </p>
-          </div>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-xl font-bold">
+            📊 Cashflow Overzicht
+          </CardTitle>
+          <Badge variant="outline" className="font-medium">
+            Totaal: {formatCurrency(metrics.netCashflow)}
+          </Badge>
         </div>
       </CardHeader>
       
-      <CardContent>
-        <div className="h-[250px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid 
-                strokeDasharray="3 3" 
-                stroke="hsl(var(--border))"
-                opacity={0.3}
-              />
-              <XAxis 
-                dataKey="period"
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis 
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={formatCurrency}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              
-              <ReferenceLine 
-                y={0} 
-                stroke="hsl(var(--muted-foreground))" 
-                strokeDasharray="2 2"
-                opacity={0.5}
-              />
-              
-              <Line
-                type="monotone"
-                dataKey="deals"
-                stroke="hsl(var(--success))"
-                strokeWidth={2}
-                dot={{ fill: "hsl(var(--success))", strokeWidth: 1, r: 3 }}
-                name="Inkomsten"
-              />
-              <Line
-                type="monotone"
-                dataKey="fixedCosts"
-                stroke="hsl(var(--destructive))"
-                strokeWidth={2}
-                dot={{ fill: "hsl(var(--destructive))", strokeWidth: 1, r: 3 }}
-                name="Vaste Kosten"
-              />
-              <Line
-                type="monotone"
-                dataKey="total"
-                stroke="hsl(var(--primary))"
-                strokeWidth={3}
-                dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 4 }}
-                name="Netto"
-              />
-            </LineChart>
-          </ResponsiveContainer>
+      <CardContent className="space-y-6">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-4 rounded-lg bg-success/10 border border-success/20">
+            <div className="text-sm font-medium text-success/80 mb-1">Totale Inkomsten</div>
+            <div className="text-2xl font-bold text-success">{formatCurrency(metrics.monthlyIncome)}</div>
+          </div>
+          <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+            <div className="text-sm font-medium text-destructive/80 mb-1">Vaste Kosten</div>
+            <div className="text-2xl font-bold text-destructive">{formatCurrency(metrics.monthlyExpenses)}</div>
+          </div>
+          <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+            <div className="text-sm font-medium text-primary/80 mb-1">Netto Resultaat</div>
+            <div className="text-2xl font-bold text-primary">{formatCurrency(metrics.netCashflow)}</div>
+          </div>
+        </div>
+
+        {/* Chart */}
+        <div className="space-y-4">
+          <div className="h-[400px] w-full">
+            <ResponsiveContainer width="100%" height={400}>
+              <LineChart data={cashflowData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <XAxis 
+                  dataKey="month"
+                  className="text-sm"
+                />
+                <YAxis 
+                  tickFormatter={(value) => formatCurrency(value)}
+                  className="text-sm"
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeDasharray="2 2" />
+                
+                {/* Income line */}
+                <Line 
+                  type="monotone" 
+                  dataKey="income" 
+                  stroke="hsl(var(--success))" 
+                  strokeWidth={3}
+                  dot={{ fill: "hsl(var(--success))", strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, stroke: "hsl(var(--success))", strokeWidth: 2 }}
+                />
+                
+                {/* Expenses line */}
+                <Line 
+                  type="monotone" 
+                  dataKey="expenses" 
+                  stroke="hsl(var(--destructive))" 
+                  strokeWidth={3}
+                  dot={{ fill: "hsl(var(--destructive))", strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, stroke: "hsl(var(--destructive))", strokeWidth: 2 }}
+                />
+                
+                {/* Net cashflow line */}
+                <Line 
+                  type="monotone" 
+                  dataKey="netCashflow" 
+                  stroke="hsl(var(--primary))" 
+                  strokeWidth={4}
+                  dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 5 }}
+                  activeDot={{ r: 7, stroke: "hsl(var(--primary))", strokeWidth: 2 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </CardContent>
     </Card>

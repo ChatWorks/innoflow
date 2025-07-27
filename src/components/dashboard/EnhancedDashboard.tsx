@@ -139,7 +139,12 @@ export const EnhancedDashboard = () => {
 
         {/* Simplified Cashflow - Full Width */}
         <div className="mb-8">
-          <SimplifiedCashflowWidget />
+          <SimplifiedCashflowWidget 
+            period={period}
+            currentDate={currentDate}
+            metrics={metrics}
+            cashflowData={cashflowData}
+          />
         </div>
       </main>
     </div>
