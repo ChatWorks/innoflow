@@ -52,56 +52,98 @@ export const calculateFixedCostsForPeriod = (
     if (costStartDate <= periodEnd && costEndDate >= periodStart) {
       const costAmount = Number(cost.amount);
       
+      // Determine the actual active period within our selected period
+      const activeStart = new Date(Math.max(costStartDate.getTime(), periodStart.getTime()));
+      const activeEnd = new Date(Math.min(costEndDate.getTime(), periodEnd.getTime()));
+      
       switch (periodType) {
         case "day":
-          // For daily view, divide by appropriate time unit
-          if (cost.frequency === 'monthly') {
-            const daysInMonth = new Date(periodStart.getFullYear(), periodStart.getMonth() + 1, 0).getDate();
-            totalFixedCosts += costAmount / daysInMonth;
-          } else if (cost.frequency === 'yearly') {
-            totalFixedCosts += costAmount / 365;
-          } else if (cost.frequency === 'quarterly') {
-            totalFixedCosts += costAmount / 90; // ~90 days per quarter
+          // For daily view, only count if the cost is active on this specific day
+          if (activeStart <= periodStart && activeEnd >= periodStart) {
+            if (cost.frequency === 'monthly') {
+              const daysInMonth = new Date(periodStart.getFullYear(), periodStart.getMonth() + 1, 0).getDate();
+              totalFixedCosts += costAmount / daysInMonth;
+            } else if (cost.frequency === 'yearly') {
+              totalFixedCosts += costAmount / 365;
+            } else if (cost.frequency === 'quarterly') {
+              totalFixedCosts += costAmount / 90;
+            }
           }
           break;
           
         case "week":
+          // Calculate what portion of the week is active
+          const weekStart = periodStart;
+          const weekEnd = periodEnd;
+          const activeWeekStart = new Date(Math.max(activeStart.getTime(), weekStart.getTime()));
+          const activeWeekEnd = new Date(Math.min(activeEnd.getTime(), weekEnd.getTime()));
+          const activeDaysInWeek = Math.ceil((activeWeekEnd.getTime() - activeWeekStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+          const totalDaysInWeek = 7;
+          const weekFraction = Math.min(activeDaysInWeek / totalDaysInWeek, 1);
+          
           if (cost.frequency === 'monthly') {
-            totalFixedCosts += costAmount / 4.33; // ~4.33 weeks per month
+            totalFixedCosts += (costAmount / 4.33) * weekFraction;
           } else if (cost.frequency === 'yearly') {
-            totalFixedCosts += costAmount / 52; // 52 weeks per year
+            totalFixedCosts += (costAmount / 52) * weekFraction;
           } else if (cost.frequency === 'quarterly') {
-            totalFixedCosts += costAmount / 13; // ~13 weeks per quarter
+            totalFixedCosts += (costAmount / 13) * weekFraction;
           }
           break;
           
         case "month":
+          // Calculate what portion of the month is active
+          const monthStart = new Date(periodStart.getFullYear(), periodStart.getMonth(), 1);
+          const monthEnd = new Date(periodStart.getFullYear(), periodStart.getMonth() + 1, 0);
+          const activeMonthStart = new Date(Math.max(activeStart.getTime(), monthStart.getTime()));
+          const activeMonthEnd = new Date(Math.min(activeEnd.getTime(), monthEnd.getTime()));
+          const activeDaysInMonth = Math.ceil((activeMonthEnd.getTime() - activeMonthStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+          const totalDaysInMonth = monthEnd.getDate();
+          const monthFraction = Math.min(activeDaysInMonth / totalDaysInMonth, 1);
+          
           if (cost.frequency === 'monthly') {
-            totalFixedCosts += costAmount;
+            totalFixedCosts += costAmount * monthFraction;
           } else if (cost.frequency === 'yearly') {
-            totalFixedCosts += costAmount / 12;
+            totalFixedCosts += (costAmount / 12) * monthFraction;
           } else if (cost.frequency === 'quarterly') {
-            totalFixedCosts += costAmount / 3;
+            totalFixedCosts += (costAmount / 3) * monthFraction;
           }
           break;
           
         case "quarter":
+          // Calculate what portion of the quarter is active
+          const quarterStart = periodStart;
+          const quarterEnd = periodEnd;
+          const activeQuarterStart = new Date(Math.max(activeStart.getTime(), quarterStart.getTime()));
+          const activeQuarterEnd = new Date(Math.min(activeEnd.getTime(), quarterEnd.getTime()));
+          const activeDaysInQuarter = Math.ceil((activeQuarterEnd.getTime() - activeQuarterStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+          const totalDaysInQuarter = Math.ceil((quarterEnd.getTime() - quarterStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+          const quarterFraction = Math.min(activeDaysInQuarter / totalDaysInQuarter, 1);
+          
           if (cost.frequency === 'monthly') {
-            totalFixedCosts += costAmount * 3;
+            totalFixedCosts += (costAmount * 3) * quarterFraction;
           } else if (cost.frequency === 'yearly') {
-            totalFixedCosts += costAmount / 4;
+            totalFixedCosts += (costAmount / 4) * quarterFraction;
           } else if (cost.frequency === 'quarterly') {
-            totalFixedCosts += costAmount;
+            totalFixedCosts += costAmount * quarterFraction;
           }
           break;
           
         case "year":
+          // Calculate what portion of the year is active
+          const yearStart = new Date(periodStart.getFullYear(), 0, 1);
+          const yearEnd = new Date(periodStart.getFullYear(), 11, 31);
+          const activeYearStart = new Date(Math.max(activeStart.getTime(), yearStart.getTime()));
+          const activeYearEnd = new Date(Math.min(activeEnd.getTime(), yearEnd.getTime()));
+          const activeDaysInYear = Math.ceil((activeYearEnd.getTime() - activeYearStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+          const totalDaysInYear = Math.ceil((yearEnd.getTime() - yearStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+          const yearFraction = Math.min(activeDaysInYear / totalDaysInYear, 1);
+          
           if (cost.frequency === 'monthly') {
-            totalFixedCosts += costAmount * 12;
+            totalFixedCosts += (costAmount * 12) * yearFraction;
           } else if (cost.frequency === 'yearly') {
-            totalFixedCosts += costAmount;
+            totalFixedCosts += costAmount * yearFraction;
           } else if (cost.frequency === 'quarterly') {
-            totalFixedCosts += costAmount * 4;
+            totalFixedCosts += (costAmount * 4) * yearFraction;
           }
           break;
       }
