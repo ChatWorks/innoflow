@@ -14,7 +14,183 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      cashflow_entries: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          deal_id: string | null
+          description: string
+          fixed_cost_id: string | null
+          id: string
+          is_projected: boolean | null
+          transaction_date: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          deal_id?: string | null
+          description: string
+          fixed_cost_id?: string | null
+          id?: string
+          is_projected?: boolean | null
+          transaction_date: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          deal_id?: string | null
+          description?: string
+          fixed_cost_id?: string | null
+          id?: string
+          is_projected?: boolean | null
+          transaction_date?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cashflow_entries_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cashflow_entries_fixed_cost_id_fkey"
+            columns: ["fixed_cost_id"]
+            isOneToOne: false
+            referencedRelation: "fixed_costs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deals: {
+        Row: {
+          amount: number
+          client_name: string
+          created_at: string
+          description: string | null
+          expected_date: string | null
+          id: string
+          invoice_date: string | null
+          payment_due_date: string | null
+          payment_received_date: string | null
+          probability: number | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          client_name: string
+          created_at?: string
+          description?: string | null
+          expected_date?: string | null
+          id?: string
+          invoice_date?: string | null
+          payment_due_date?: string | null
+          payment_received_date?: string | null
+          probability?: number | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          client_name?: string
+          created_at?: string
+          description?: string | null
+          expected_date?: string | null
+          id?: string
+          invoice_date?: string | null
+          payment_due_date?: string | null
+          payment_received_date?: string | null
+          probability?: number | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fixed_costs: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          description: string | null
+          end_date: string | null
+          frequency: string
+          id: string
+          is_active: boolean | null
+          name: string
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          frequency: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          start_date: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          frequency?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          role: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          role?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          role?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
