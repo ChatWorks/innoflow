@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { TimePeriodType } from "@/components/dashboard/TimeRangeSelector";
 import { 
   startOfDay, 
@@ -33,6 +34,7 @@ export interface CashflowSummary {
 }
 
 export const useEnhancedCashflowData = (periodType: TimePeriodType, selectedDate: Date) => {
+  const { user } = useAuth();
   const [data, setData] = useState<CashflowDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<CashflowSummary>({
@@ -94,7 +96,8 @@ export const useEnhancedCashflowData = (periodType: TimePeriodType, selectedDate
   };
 
   useEffect(() => {
-    const fetchCashflowData = async () => {
+    if (user) {
+      const fetchCashflowData = async () => {
       setLoading(true);
       
       try {
@@ -104,6 +107,7 @@ export const useEnhancedCashflowData = (periodType: TimePeriodType, selectedDate
         const { data: deals, error: dealsError } = await supabase
           .from('deals')
           .select('*')
+          .eq('user_id', user?.id)
           .gte('payment_received_date', start.toISOString().split('T')[0])
           .lte('payment_received_date', end.toISOString().split('T')[0])
           .eq('status', 'paid');
@@ -114,6 +118,7 @@ export const useEnhancedCashflowData = (periodType: TimePeriodType, selectedDate
         const { data: fixedCosts, error: fixedCostsError } = await supabase
           .from('fixed_costs')
           .select('*')
+          .eq('user_id', user?.id)
           .eq('is_active', true);
 
         if (fixedCostsError) throw fixedCostsError;
@@ -219,10 +224,11 @@ export const useEnhancedCashflowData = (periodType: TimePeriodType, selectedDate
       } finally {
         setLoading(false);
       }
-    };
+      };
 
-    fetchCashflowData();
-  }, [selectedDate, periodType]);
+      fetchCashflowData();
+    }
+  }, [selectedDate, periodType, user]);
 
   return { data, loading, summary };
 };

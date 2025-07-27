@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
 interface DailyCostData {
@@ -28,13 +29,16 @@ interface FixedCost {
 }
 
 export const useDailyCosts = (selectedMonth: Date) => {
+  const { user } = useAuth();
   const [data, setData] = useState<DailyCostData[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchDailyCosts();
-  }, [selectedMonth]);
+    if (user) {
+      fetchDailyCosts();
+    }
+  }, [selectedMonth, user]);
 
   const getDaysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -53,6 +57,7 @@ export const useDailyCosts = (selectedMonth: Date) => {
       const { data: fixedCosts, error: fixedError } = await supabase
         .from('fixed_costs')
         .select('*')
+        .eq('user_id', user?.id)
         .eq('is_active', true);
 
       if (fixedError) throw fixedError;
@@ -60,7 +65,8 @@ export const useDailyCosts = (selectedMonth: Date) => {
       // Fetch deals for the month
       const { data: deals, error: dealsError } = await supabase
         .from('deals')
-        .select('*');
+        .select('*')
+        .eq('user_id', user?.id);
 
       if (dealsError) throw dealsError;
 
