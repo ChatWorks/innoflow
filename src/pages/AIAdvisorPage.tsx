@@ -30,7 +30,7 @@ export const AIAdvisorPage = () => {
     <div className="min-h-screen bg-background">
       <DashboardHeader onLogout={signOut} userName={user?.email?.split("@")[0]} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="h-[80vh] overflow-hidden rounded-lg border border-border bg-card">
+        <div className="min-h-[600px] rounded-lg border border-border bg-card">
           <ModernChatInterface
             context={{
               monthlyIncome: metrics.monthlyIncome,

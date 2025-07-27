@@ -131,7 +131,7 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
   ];
 
   return (
-    <div className="flex h-full w-full overflow-hidden">
+    <div className="flex min-h-[600px] w-full">
       {/* Sidebar */}
         <ChatSidebar
           sessions={sessions}
@@ -145,10 +145,10 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
         />
 
         {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 min-h-[600px]">
 
         {/* Messages */}
-        <ScrollArea className="flex-1 p-4">
+        <ScrollArea className="flex-1 p-4 max-h-[500px]">
           <div className="space-y-6">
             {messages.length === 0 ? (
               <div className="text-center py-12 space-y-6">
