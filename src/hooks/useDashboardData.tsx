@@ -135,10 +135,45 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
         console.error("Error fetching cashflow entries:", entriesError);
       }
 
+      // Add paid deals as income entries for the current period
+      const paidDealsInPeriod = (deals || []).filter(deal => {
+        if (deal.status === "paid" && deal.payment_received_date) {
+          const paymentDate = new Date(deal.payment_received_date);
+          return paymentDate >= start && paymentDate <= end;
+        }
+        return false;
+      });
+
+      // Create virtual cashflow entries for paid deals that don't have entries yet
+      const paidDealEntries = paidDealsInPeriod.map(deal => ({
+        id: `deal-${deal.id}`,
+        type: "income",
+        description: `Deal betaling: ${deal.title}`,
+        category: "deals",
+        amount: deal.amount,
+        transaction_date: deal.payment_received_date,
+        deal_id: deal.id,
+        is_projected: false,
+        created_at: deal.payment_received_date,
+        updated_at: deal.payment_received_date,
+        fixed_cost_id: null
+      }));
+
+      // Combine actual cashflow entries with paid deal entries (avoid duplicates)
+      const existingDealIds = (cashflowEntries || [])
+        .filter(entry => entry.deal_id)
+        .map(entry => entry.deal_id);
+      
+      const newDealEntries = paidDealEntries.filter(entry => 
+        !existingDealIds.includes(entry.deal_id)
+      );
+
+      const allCashflowEntries = [...(cashflowEntries || []), ...newDealEntries];
+
       setData({
         deals: deals || [],
         fixedCosts: fixedCosts || [],
-        cashflowEntries: cashflowEntries || []
+        cashflowEntries: allCashflowEntries || []
       });
 
     } catch (error) {

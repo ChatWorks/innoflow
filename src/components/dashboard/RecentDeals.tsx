@@ -1,11 +1,13 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Eye, Edit, MoreHorizontal, ArrowRight } from "lucide-react";
+import { Eye, Edit, MoreHorizontal, ArrowRight, Trash2 } from "lucide-react";
 import { AddDealModal } from "./AddDealModal";
+import { EditDealModal } from "./EditDealModal";
 
 interface Deal {
   id: string;
@@ -29,6 +31,8 @@ interface RecentDealsProps {
 
 export const RecentDeals = ({ deals, onViewDeal, onEditDeal, onDealsUpdate }: RecentDealsProps) => {
   const { toast } = useToast();
+  const [editingDeal, setEditingDeal] = useState<any>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('nl-NL', {
@@ -111,6 +115,12 @@ export const RecentDeals = ({ deals, onViewDeal, onEditDeal, onDealsUpdate }: Re
         updateData.payment_due_date = dueDate.toISOString().split('T')[0];
       } else if (newStatus === "paid") {
         updateData.payment_received_date = now;
+        
+        // Create cashflow entry for paid deal
+        const deal = deals.find(d => d.id === dealId);
+        if (deal) {
+          await createCashflowEntry(dealId, deal.amount, deal.title);
+        }
       }
 
       const { error } = await supabase
@@ -131,6 +141,56 @@ export const RecentDeals = ({ deals, onViewDeal, onEditDeal, onDealsUpdate }: Re
       toast({
         title: "Fout",
         description: "Kon deal status niet bijwerken.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const createCashflowEntry = async (dealId: string, amount: number, description: string) => {
+    try {
+      const { error } = await supabase
+        .from("cashflow_entries")
+        .insert({
+          type: "income",
+          description: `Deal betaling: ${description}`,
+          category: "deals",
+          amount: amount,
+          transaction_date: new Date().toISOString().split('T')[0],
+          deal_id: dealId,
+          is_projected: false
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error creating cashflow entry:", error);
+    }
+  };
+
+  const handleEditDeal = (deal: any) => {
+    setEditingDeal(deal);
+    setEditModalOpen(true);
+  };
+
+  const handleDeleteDeal = async (dealId: string) => {
+    try {
+      const { error } = await supabase
+        .from("deals")
+        .delete()
+        .eq("id", dealId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Deal verwijderd",
+        description: "De deal is succesvol verwijderd.",
+      });
+
+      onDealsUpdate?.();
+    } catch (error) {
+      console.error("Error deleting deal:", error);
+      toast({
+        title: "Fout",
+        description: "Kon deal niet verwijderen.",
         variant: "destructive",
       });
     }
@@ -209,9 +269,16 @@ export const RecentDeals = ({ deals, onViewDeal, onEditDeal, onDealsUpdate }: Re
                           <Eye className="h-4 w-4 mr-2" />
                           Bekijken
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onEditDeal?.(deal)}>
+                        <DropdownMenuItem onClick={() => handleEditDeal(deal)}>
                           <Edit className="h-4 w-4 mr-2" />
                           Bewerken
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className="text-destructive"
+                          onClick={() => handleDeleteDeal(deal.id)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Verwijderen
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -222,6 +289,13 @@ export const RecentDeals = ({ deals, onViewDeal, onEditDeal, onDealsUpdate }: Re
           </div>
         )}
       </CardContent>
+      
+      <EditDealModal
+        deal={editingDeal}
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        onSuccess={onDealsUpdate}
+      />
     </Card>
   );
 };
