@@ -131,8 +131,8 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
   ];
 
   return (
-    <div className="w-full">
-      <div className="flex h-[calc(100vh-200px)] bg-background rounded-lg overflow-hidden shadow-xl border border-border max-w-full mx-auto">
+    <div className="h-full w-full">
+      <div className="flex h-full bg-background overflow-hidden">
         {/* Sidebar */}
         <ChatSidebar
           sessions={sessions}
@@ -147,29 +147,15 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
 
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <div className="p-6 border-b border-border bg-gradient-to-r from-primary/5 to-accent/5">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-full bg-primary/10">
-              <Bot className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold font-manrope text-foreground">
-                AI Financieel Adviseur
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {currentSession?.title || 'Nieuwe Chat'}
-              </p>
-            </div>
-            <div className="ml-auto flex items-center space-x-2 text-xs text-muted-foreground">
-              <TrendingUp className="h-4 w-4" />
-              <span>€{context.netCashflow.toLocaleString()} netto cashflow</span>
-            </div>
-          </div>
+        {/* Simple header */}
+        <div className="flex-shrink-0 h-14 border-b border-border bg-background flex items-center justify-center">
+          <h2 className="text-lg font-semibold text-foreground">
+            {currentSession?.title || 'Nieuwe Chat'}
+          </h2>
         </div>
 
         {/* Messages */}
-        <ScrollArea className="flex-1 p-6">
+        <ScrollArea className="flex-1 p-4">
           <div className="space-y-6">
             {messages.length === 0 ? (
               <div className="text-center py-12 space-y-6">
@@ -211,8 +197,8 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
                     </div>
                   )}
                   
-                  <Card
-                    className={`max-w-[70%] p-4 transition-all duration-200 hover:shadow-md ${
+                  <div
+                    className={`max-w-[80%] p-3 rounded-2xl ${
                       message.role === 'user'
                         ? 'bg-primary text-primary-foreground ml-auto'
                         : 'bg-card border border-border'
@@ -223,7 +209,7 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
                     }`}>
                       {formatMessage(message.content)}
                     </div>
-                  </Card>
+                  </div>
 
                   {message.role === 'user' && (
                     <div className="p-2 rounded-full bg-accent/10 h-fit">
@@ -239,7 +225,7 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
                 <div className="p-2 rounded-full bg-primary/10 h-fit">
                   <Bot className="h-5 w-5 text-primary" />
                 </div>
-                <Card className="max-w-[70%] p-4 bg-card border border-border">
+                <div className="max-w-[80%] p-3 bg-card border border-border rounded-2xl">
                   <div className="flex items-center space-x-2">
                     <div className="flex space-x-1">
                       <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
@@ -248,7 +234,7 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
                     </div>
                     <span className="text-sm text-muted-foreground">Aan het denken...</span>
                   </div>
-                </Card>
+                </div>
               </div>
             )}
 
@@ -257,23 +243,23 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
         </ScrollArea>
 
         {/* Input Area */}
-        <div className="p-6 border-t border-border bg-background flex-shrink-0">
-          <div className="relative max-w-4xl mx-auto">
+        <div className="p-4 border-t border-border bg-background flex-shrink-0">
+          <div className="relative max-w-3xl mx-auto">
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyPress}
-              placeholder="Stel je financiële vraag..."
-              className="min-h-[60px] resize-none pr-12 border-border focus:border-primary transition-colors w-full"
+              placeholder="Stel een vraag..."
+              className="min-h-[50px] max-h-32 resize-none pr-12 border-border focus:border-primary transition-colors w-full rounded-xl"
               disabled={isLoading}
             />
             <Button
               onClick={sendMessage}
               disabled={!input.trim() || isLoading}
               size="icon"
-              className="absolute right-2 bottom-2 h-8 w-8 bg-primary hover:bg-primary/90"
+              className="absolute right-2 bottom-2 h-7 w-7 bg-primary hover:bg-primary/90 rounded-lg"
             >
-              <Send className="h-4 w-4" />
+              <Send className="h-3 w-3" />
             </Button>
           </div>
         </div>

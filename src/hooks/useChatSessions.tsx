@@ -175,9 +175,9 @@ export const useChatSessions = () => {
   };
 
   // Switch to a different session
-  const switchToSession = (session: ChatSession) => {
+  const switchToSession = async (session: ChatSession) => {
     setCurrentSession(session);
-    loadMessages(session.id);
+    await loadMessages(session.id);
   };
 
   useEffect(() => {

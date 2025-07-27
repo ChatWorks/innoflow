@@ -27,34 +27,31 @@ export const AIAdvisorPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardHeader onLogout={signOut} userName={user?.email?.split("@")[0]} />
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
+      {/* Simple top header */}
+      <div className="flex-shrink-0 h-12 border-b border-border bg-background/95 backdrop-blur-sm flex items-center justify-between px-4">
+        <h1 className="text-sm font-medium text-foreground">AI Financieel Adviseur</h1>
+        <button 
+          onClick={signOut}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Uitloggen
+        </button>
+      </div>
       
-      <main className="w-full px-4 sm:px-6 lg:px-8 py-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold font-manrope text-foreground mb-2">
-              AI Financieel Adviseur
-            </h2>
-            <p className="text-muted-foreground">
-              Krijg persoonlijk financieel advies op basis van je data
-            </p>
-          </div>
-
-          <div className="w-full">
-            <ModernChatInterface
-              context={{
-                monthlyIncome: metrics.monthlyIncome,
-                monthlyExpenses: metrics.monthlyExpenses,
-                netCashflow: metrics.netCashflow,
-                pipelineValue: metrics.pendingValue,
-                activeDeals: data.deals.filter(deal => deal.status !== 'paid').length,
-                fixedCosts: data.fixedCosts.length
-              }}
-            />
-          </div>
-        </div>
-      </main>
+      {/* Full screen chat interface */}
+      <div className="flex-1 overflow-hidden">
+        <ModernChatInterface
+          context={{
+            monthlyIncome: metrics.monthlyIncome,
+            monthlyExpenses: metrics.monthlyExpenses,
+            netCashflow: metrics.netCashflow,
+            pipelineValue: metrics.pendingValue,
+            activeDeals: data.deals.filter(deal => deal.status !== 'paid').length,
+            fixedCosts: data.fixedCosts.length
+          }}
+        />
+      </div>
     </div>
   );
 };

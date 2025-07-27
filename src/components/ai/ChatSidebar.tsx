@@ -71,8 +71,8 @@ export const ChatSidebar = ({
 
   if (isCollapsed) {
     return (
-      <div className="w-16 bg-card border-r border-border transition-all duration-300 ease-in-out flex-shrink-0">
-        <div className="p-4 space-y-4">
+      <div className="w-12 bg-card border-r border-border transition-all duration-300 ease-in-out flex-shrink-0">
+        <div className="p-2 space-y-2">
           <Button
             onClick={onToggleCollapse}
             variant="ghost"
@@ -91,11 +91,11 @@ export const ChatSidebar = ({
             <Plus className="h-4 w-4" />
           </Button>
 
-          <Separator />
+          <div className="h-px bg-border my-2" />
 
-          <ScrollArea className="h-[calc(100vh-200px)]">
-            <div className="space-y-2">
-              {sessions.slice(0, 8).map((session) => (
+          <ScrollArea className="h-[calc(100vh-120px)]">
+            <div className="space-y-1">
+              {sessions.slice(0, 12).map((session) => (
                 <Button
                   key={session.id}
                   onClick={() => onSessionSelect(session)}
@@ -104,7 +104,7 @@ export const ChatSidebar = ({
                   className="w-8 h-8"
                   title={session.title}
                 >
-                  <MessageSquare className="h-4 w-4" />
+                  <MessageSquare className="h-3 w-3" />
                 </Button>
               ))}
             </div>
@@ -115,51 +115,51 @@ export const ChatSidebar = ({
   }
 
   return (
-    <Card className="w-80 bg-card border-r border-border transition-all duration-300 ease-in-out rounded-none flex-shrink-0">
-      <div className="p-6 space-y-4">
+    <div className="w-64 bg-card border-r border-border transition-all duration-300 ease-in-out flex-shrink-0">
+      <div className="p-3 space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold font-manrope text-foreground">
-            Chat Geschiedenis
+          <h2 className="text-sm font-semibold text-foreground">
+            Chats
           </h2>
           <Button
             onClick={onToggleCollapse}
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-6 w-6"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-3 w-3" />
           </Button>
         </div>
 
         <Button
           onClick={onNewChat}
-          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-200 hover:scale-105"
+          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-sm h-8"
         >
-          <Plus className="w-4 h-4 mr-2" />
-          Nieuwe Chat
+          <Plus className="w-3 h-3 mr-2" />
+          Nieuwe chat
         </Button>
 
-        <Separator />
+        <div className="h-px bg-border" />
 
-        <ScrollArea className="h-[calc(100vh-200px)]">
+        <ScrollArea className="h-[calc(100vh-120px)]">
           <div className="space-y-2">
             {sessions.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">Nog geen chats</p>
+              <div className="text-center py-6 text-muted-foreground">
+                <MessageSquare className="h-6 w-6 mx-auto mb-2 opacity-50" />
+                <p className="text-xs">Nog geen chats</p>
               </div>
             ) : (
               sessions.map((session) => (
                 <div
                   key={session.id}
-                  className={`group p-3 rounded-lg border transition-all duration-200 hover:shadow-md cursor-pointer ${
+                  className={`group p-2 rounded-lg transition-all duration-200 cursor-pointer ${
                     currentSession?.id === session.id
-                      ? "bg-primary/10 border-primary/20 shadow-md"
-                      : "bg-background hover:bg-accent/50 border-border"
+                      ? "bg-primary/10 text-primary"
+                      : "hover:bg-accent/50 text-foreground"
                   }`}
                   onClick={() => onSessionSelect(session)}
                 >
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
                       {editingId === session.id ? (
                         <Input
@@ -170,18 +170,17 @@ export const ChatSidebar = ({
                             if (e.key === "Enter") handleEditSave();
                             if (e.key === "Escape") handleEditCancel();
                           }}
-                          className="h-6 text-sm p-1"
+                          className="h-5 text-xs p-1"
                           autoFocus
                           onClick={(e) => e.stopPropagation()}
                         />
                       ) : (
-                        <h3 className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                        <h3 className="text-xs font-medium truncate">
                           {session.title}
                         </h3>
                       )}
                       
-                      <div className="flex items-center mt-1 text-xs text-muted-foreground">
-                        <Calendar className="w-3 h-3 mr-1" />
+                      <div className="text-xs text-muted-foreground mt-0.5">
                         {formatDistanceToNow(new Date(session.updated_at), {
                           addSuffix: true,
                           locale: nl,
@@ -189,17 +188,17 @@ export const ChatSidebar = ({
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center space-x-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 hover:bg-accent"
+                        className="h-5 w-5 hover:bg-accent"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleEditStart(session);
                         }}
                       >
-                        <Edit3 className="h-3 w-3" />
+                        <Edit3 className="h-2.5 w-2.5" />
                       </Button>
 
                       <AlertDialog>
@@ -207,10 +206,10 @@ export const ChatSidebar = ({
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 hover:bg-destructive/10 hover:text-destructive"
+                            className="h-5 w-5 hover:bg-destructive/10 hover:text-destructive"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <Trash2 className="h-3 w-3" />
+                            <Trash2 className="h-2.5 w-2.5" />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
@@ -239,6 +238,6 @@ export const ChatSidebar = ({
           </div>
         </ScrollArea>
       </div>
-    </Card>
+    </div>
   );
 };
