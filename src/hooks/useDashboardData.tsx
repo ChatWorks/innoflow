@@ -106,7 +106,7 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
       setLoading(true);
       const { start, end } = getDateRange(currentDate, period);
 
-      // Fetch all deals first, then filter in memory based on relevant dates
+      // Fetch all deals
       const { data: deals, error: dealsError } = await supabase
         .from("deals")
         .select("*")
@@ -133,86 +133,32 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
         console.error("Error fetching fixed costs:", costsError);
       }
 
-      // Fetch cashflow entries within date range
-      const { data: cashflowEntries, error: entriesError } = await supabase
-        .from("cashflow_entries")
-        .select("*")
-        .eq("user_id", user.id)
-        .gte("transaction_date", start.toISOString().split('T')[0])
-        .lte("transaction_date", end.toISOString().split('T')[0])
-        .order("transaction_date", { ascending: false });
-
-      if (entriesError) {
-        console.error("Error fetching cashflow entries:", entriesError);
-      }
-
-      // Filter deals based on relevant dates within the selected period
+      // Filter deals based on payment_received_date within the selected period
       const filteredDeals = (deals || []).filter(deal => {
-        // For projection purposes, use expected/due dates rather than actual payment dates
-        let relevantDate: Date | null = null;
-        
-        if (deal.payment_due_date) {
-          // Prioritize payment due date for projection
-          relevantDate = new Date(deal.payment_due_date);
-        } else if (deal.expected_date) {
-          // Use expected date as backup
-          relevantDate = new Date(deal.expected_date);
-        } else if (deal.status === 'invoiced' && deal.invoice_date) {
-          // For invoiced deals without due date, use invoice date
-          relevantDate = new Date(deal.invoice_date);
-        } else if (deal.status === 'paid' && deal.payment_received_date) {
-          // Only for already paid deals without other dates, use payment date
-          relevantDate = new Date(deal.payment_received_date);
-        } else {
-          // Final fallback to creation date
-          relevantDate = new Date(deal.created_at);
+        // Use payment_received_date as primary date for filtering
+        if (deal.payment_received_date) {
+          const paymentDate = new Date(deal.payment_received_date);
+          return paymentDate >= start && paymentDate <= end;
         }
         
-        return relevantDate && relevantDate >= start && relevantDate <= end;
-      });
-
-      // Create virtual cashflow entries for ALL deals for projection purposes
-      const allDealsForIncome = (deals || []).filter(deal => {
-        // Include all deals regardless of period for projection
-        return deal.status === "paid" || deal.status === "confirmed" || deal.status === "potential";
-      });
-
-      // Create virtual cashflow entries for deals that don't have entries yet
-      const dealEntries = allDealsForIncome.map(deal => {
-        // Use the same date logic as filtering for consistency
-        let transactionDate = deal.payment_due_date || deal.expected_date || deal.payment_received_date || deal.created_at;
+        // For unpaid deals, use expected_date or payment_due_date for projections
+        if (deal.expected_date) {
+          const expectedDate = new Date(deal.expected_date);
+          return expectedDate >= start && expectedDate <= end;
+        }
         
-        return {
-          id: `deal-${deal.id}`,
-          type: "income",
-          description: `Deal inkomsten: ${deal.title}`,
-          category: "deals",
-          amount: deal.amount,
-          transaction_date: transactionDate,
-          deal_id: deal.id,
-          is_projected: deal.status !== "paid",
-          created_at: deal.created_at,
-          updated_at: deal.updated_at,
-          fixed_cost_id: null,
-          user_id: deal.user_id
-        };
+        if (deal.payment_due_date) {
+          const dueDate = new Date(deal.payment_due_date);
+          return dueDate >= start && dueDate <= end;
+        }
+        
+        return false;
       });
-
-      // Combine actual cashflow entries with paid deal entries (avoid duplicates)
-      const existingDealIds = (cashflowEntries || [])
-        .filter(entry => entry.deal_id)
-        .map(entry => entry.deal_id);
-      
-      const newDealEntries = dealEntries.filter(entry => 
-        !existingDealIds.includes(entry.deal_id)
-      );
-
-      const allCashflowEntries = [...(cashflowEntries || []), ...newDealEntries];
 
       setData({
         deals: filteredDeals,
         fixedCosts: fixedCosts || [],
-        cashflowEntries: allCashflowEntries || []
+        cashflowEntries: [] // Not using cashflow entries anymore
       });
 
     } catch (error) {
@@ -229,18 +175,13 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
 
   const calculateMetrics = useCallback((): DashboardMetrics => {
     const { start, end } = getDateRange(currentDate, period);
-    const { start: prevStart, end: prevEnd } = getPreviousDateRange(currentDate, period);
 
-    // Calculate current period metrics using unified logic
-    const monthlyIncome = data.cashflowEntries
-      .filter(entry => entry.type === "income")
-      .reduce((sum, entry) => sum + Number(entry.amount), 0);
+    // Calculate income from deals (only paid deals count as actual income)
+    const monthlyIncome = data.deals
+      .filter(deal => deal.status === "paid")
+      .reduce((sum, deal) => sum + Number(deal.amount), 0);
 
-    const monthlyExpenses = data.cashflowEntries
-      .filter(entry => entry.type === "expense")
-      .reduce((sum, entry) => sum + Number(entry.amount), 0);
-
-    // Calculate fixed costs for current period using unified logic
+    // Calculate fixed costs for current period
     const fixedCostExpenses = calculateFixedCostsForPeriod(
       data.fixedCosts,
       period as PeriodType,
@@ -248,7 +189,7 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
       end
     );
 
-    const totalExpenses = monthlyExpenses + fixedCostExpenses;
+    const totalExpenses = fixedCostExpenses;
 
     // Calculate pipeline value (confirmed and potential deals)
     const pendingValue = data.deals
@@ -257,11 +198,10 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
 
     const netCashflow = monthlyIncome - totalExpenses;
 
-    // For now, use placeholder values for previous period calculations
-    // In a real app, you'd fetch data for the previous period
-    const previousIncome = monthlyIncome * 0.9; // 10% less than current
-    const previousExpenses = totalExpenses * 1.1; // 10% more than current
-    const previousPending = pendingValue * 0.85; // 15% less than current
+    // For previous period calculations, use simple placeholders
+    const previousIncome = monthlyIncome * 0.9;
+    const previousExpenses = totalExpenses * 1.1;
+    const previousPending = pendingValue * 0.85;
     const previousNetCashflow = previousIncome - previousExpenses;
 
     return {
@@ -274,7 +214,7 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
       previousPending,
       previousNetCashflow
     };
-  }, [data, currentDate, period, getDateRange, getPreviousDateRange]);
+  }, [data, currentDate, period, getDateRange]);
 
   const generateCashflowData = useCallback(() => {
     const { start, end } = getDateRange(currentDate, period);
@@ -318,30 +258,29 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
         date.setMonth(start.getMonth() + i);
       }
 
-      // Filter cashflow entries for this interval
-      const intervalEntries = data.cashflowEntries.filter(entry => {
-        const entryDate = new Date(entry.transaction_date);
+      // Filter deals for this interval using payment_received_date
+      const intervalDeals = data.deals.filter(deal => {
+        if (!deal.payment_received_date) return false;
+        
+        const paymentDate = new Date(deal.payment_received_date);
         if (intervalType === 'hour') {
-          return entryDate.getHours() === i && 
-                 entryDate.toDateString() === start.toDateString();
+          return paymentDate.getHours() === i && 
+                 paymentDate.toDateString() === start.toDateString();
         } else if (intervalType === 'day') {
-          return entryDate.toDateString() === date.toDateString();
+          return paymentDate.toDateString() === date.toDateString();
         } else if (intervalType === 'month') {
-          return entryDate.getMonth() === date.getMonth() && 
-                 entryDate.getFullYear() === date.getFullYear();
+          return paymentDate.getMonth() === date.getMonth() && 
+                 paymentDate.getFullYear() === date.getFullYear();
         }
         return false;
       });
 
-      const income = intervalEntries
-        .filter(entry => entry.type === "income")
-        .reduce((sum, entry) => sum + Number(entry.amount), 0);
-      
-      const expensesFromEntries = intervalEntries
-        .filter(entry => entry.type === "expense")
-        .reduce((sum, entry) => sum + Number(entry.amount), 0);
+      // Calculate income from paid deals only
+      const income = intervalDeals
+        .filter(deal => deal.status === "paid")
+        .reduce((sum, deal) => sum + Number(deal.amount), 0);
 
-      // Add fixed costs for this interval
+      // Calculate fixed costs for this interval
       const intervalStart = new Date(date);
       const intervalEnd = new Date(date);
       if (intervalType === 'hour') {
@@ -365,8 +304,6 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
         intervalEnd
       );
 
-      const totalExpenses = expensesFromEntries + fixedCostsForInterval;
-
       let label = '';
       if (intervalType === 'hour') {
         label = `${i}:00`;
@@ -379,13 +316,13 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
       dataPoints.push({
         month: label,
         income,
-        expenses: totalExpenses,
-        netCashflow: income - totalExpenses
+        expenses: fixedCostsForInterval,
+        netCashflow: income - fixedCostsForInterval
       });
     }
 
     return dataPoints;
-  }, [data.cashflowEntries, currentDate, period, getDateRange]);
+  }, [data.deals, data.fixedCosts, currentDate, period, getDateRange]);
 
   useEffect(() => {
     fetchDashboardData();
