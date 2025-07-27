@@ -46,7 +46,10 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
   };
 
   useEffect(() => {
-    scrollToBottom();
+    // Only scroll to bottom if there are messages
+    if (messages.length > 0) {
+      scrollToBottom();
+    }
   }, [messages]);
 
   // Remove auto-creation of sessions - only create when user sends first message
