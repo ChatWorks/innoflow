@@ -38,19 +38,19 @@ export const Home = () => {
           <>
             {/* Welcome Section */}
             <div className="mb-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-              <Activity className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">
-                Welkom terug, {user?.email?.split('@')[0] || 'Team Member'}
-              </h1>
-              <p className="text-muted-foreground">
-                Hier is je cashflow overzicht en belangrijkste inzichten
-              </p>
-            </div>
-          </div>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
+                  <Activity className="h-6 w-6 text-primary-foreground" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold text-foreground">
+                    Welkom terug, {user?.email?.split('@')[0] || 'Team Member'}
+                  </h1>
+                  <p className="text-muted-foreground">
+                    Hier is je cashflow overzicht en belangrijkste inzichten
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Quick Stats */}
@@ -104,48 +104,48 @@ export const Home = () => {
               </Card>
             </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Cashflow Widget - Takes 2 columns */}
-          <div className="lg:col-span-2">
-            <SimplifiedCashflowWidget />
-          </div>
-
-          {/* Quick Insights - Takes 1 column */}
-          <div className="lg:col-span-1">
-            <QuickInsightsWidget 
-              monthlyIncome={metrics.monthlyIncome}
-              monthlyExpenses={metrics.monthlyExpenses}
-              netCashflow={metrics.netCashflow}
-              pipelineValue={metrics.pendingValue}
-              deals={dashboardData.deals}
-              fixedCosts={dashboardData.fixedCosts}
-            />
-          </div>
-        </div>
-
-        {/* Bottom Section - Additional insights or tips */}
-        <div className="mt-8">
-          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200 dark:border-blue-800">
-            <CardHeader>
-              <CardTitle className="text-blue-900 dark:text-blue-100">💡 Dashboard Tips</CardTitle>
-            </CardHeader>
-            <CardContent className="text-blue-800 dark:text-blue-200">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div>
-                  <strong>Cashflow Monitoring:</strong> Bekijk je cashflow trends om toekomstige liquiditeit te voorspellen.
-                </div>
-                <div>
-                  <strong>Periodevergelijking:</strong> Wissel tussen dag, maand, kwartaal en jaar weergaves voor verschillende inzichten.
-                </div>
-                <div>
-                  <strong>AI Advisor:</strong> Gebruik de AI advisor voor gepersonaliseerde business inzichten en aanbevelingen.
-                </div>
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Cashflow Widget - Takes 2 columns */}
+              <div className="lg:col-span-2">
+                <SimplifiedCashflowWidget />
               </div>
-            </CardContent>
-          </Card>
-        </div>
-        </>
+
+              {/* Quick Insights - Takes 1 column */}
+              <div className="lg:col-span-1">
+                <QuickInsightsWidget 
+                  monthlyIncome={metrics.monthlyIncome}
+                  monthlyExpenses={metrics.monthlyExpenses}
+                  netCashflow={metrics.netCashflow}
+                  pipelineValue={metrics.pendingValue}
+                  deals={dashboardData.deals}
+                  fixedCosts={dashboardData.fixedCosts}
+                />
+              </div>
+            </div>
+
+            {/* Bottom Section - Additional insights or tips */}
+            <div className="mt-8">
+              <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200 dark:border-blue-800">
+                <CardHeader>
+                  <CardTitle className="text-blue-900 dark:text-blue-100">💡 Dashboard Tips</CardTitle>
+                </CardHeader>
+                <CardContent className="text-blue-800 dark:text-blue-200">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <strong>Cashflow Monitoring:</strong> Bekijk je cashflow trends om toekomstige liquiditeit te voorspellen.
+                    </div>
+                    <div>
+                      <strong>Periodevergelijking:</strong> Wissel tussen dag, maand, kwartaal en jaar weergaves voor verschillende inzichten.
+                    </div>
+                    <div>
+                      <strong>AI Advisor:</strong> Gebruik de AI advisor voor gepersonaliseerde business inzichten en aanbevelingen.
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </>
         )}
       </main>
     </div>
