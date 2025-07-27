@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   LineChart, 
   Line, 
@@ -17,6 +18,8 @@ import {
 } from "recharts";
 import { TrendingUp, ZoomIn, ZoomOut, BarChart3, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface CashflowDataPoint {
   month: string;
@@ -26,25 +29,119 @@ interface CashflowDataPoint {
   forecastIncome?: number;
   forecastExpenses?: number;
   forecastNetCashflow?: number;
+  oneTimeRevenue?: number;
+  recurringRevenue?: number;
+  projectedMrr?: number;
 }
 
 interface EnhancedCashflowChartProps {
-  data: CashflowDataPoint[];
+  data?: CashflowDataPoint[];
   timeframe?: "week" | "month" | "quarter";
   className?: string;
   showForecast?: boolean;
   onDataPointClick?: (data: any) => void;
+  showRevenueBreakdown?: boolean;
 }
 
 export const EnhancedCashflowChart = ({
-  data,
+  data: propData,
   timeframe = "month",
   className,
   showForecast = true,
-  onDataPointClick
+  onDataPointClick,
+  showRevenueBreakdown = false
 }: EnhancedCashflowChartProps) => {
   const [zoomLevel, setZoomLevel] = useState<"all" | "recent" | "forecast">("all");
   const [hoveredData, setHoveredData] = useState<any>(null);
+  const [data, setData] = useState<CashflowDataPoint[]>(propData || []);
+  const [loading, setLoading] = useState(!propData);
+  const [chartType, setChartType] = useState<"cashflow" | "revenue">("cashflow");
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!propData && showRevenueBreakdown) {
+      generateEnhancedData();
+    } else if (propData) {
+      setData(propData);
+      setLoading(false);
+    }
+  }, [propData, showRevenueBreakdown]);
+
+  const generateEnhancedData = async () => {
+    try {
+      setLoading(true);
+      
+      // Generate 12 months of data (6 past, current, 5 future)
+      const dataPoints: CashflowDataPoint[] = [];
+      const now = new Date();
+      
+      // Fetch deals and recurring revenue
+      const { data: deals } = await supabase
+        .from('deals')
+        .select('*');
+
+      const { data: recurringRevenue } = await supabase
+        .from('recurring_revenue')
+        .select('*')
+        .eq('is_active', true);
+
+      for (let i = 6; i >= -5; i--) {
+        const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthStr = monthDate.toLocaleDateString('nl-NL', { month: 'short', year: 'numeric' });
+        
+        const isHistorical = i >= 0;
+        
+        // Calculate one-time revenue
+        const oneTimeRevenue = deals
+          ?.filter(deal => {
+            if (!isHistorical) return 0; // No historical data for future
+            if (!deal.payment_received_date || deal.deal_type !== 'one_time') return false;
+            const paymentDate = new Date(deal.payment_received_date);
+            return paymentDate.getMonth() === monthDate.getMonth() && 
+                   paymentDate.getFullYear() === monthDate.getFullYear();
+          })
+          .reduce((sum, deal) => sum + Number(deal.amount), 0) || 0;
+
+        // Calculate recurring revenue
+        const mrrAmount = recurringRevenue
+          ?.filter(mrr => {
+            const startDate = new Date(mrr.start_date);
+            const endDate = mrr.end_date ? new Date(mrr.end_date) : new Date(2030, 11, 31);
+            return monthDate >= startDate && monthDate <= endDate;
+          })
+          .reduce((sum, mrr) => sum + Number(mrr.monthly_amount), 0) || 0;
+
+        const totalIncome = oneTimeRevenue + mrrAmount;
+        const expenses = 2000; // Mock expenses
+        
+        dataPoints.push({
+          month: monthStr,
+          income: totalIncome,
+          expenses: expenses,
+          netCashflow: totalIncome - expenses,
+          oneTimeRevenue: oneTimeRevenue,
+          recurringRevenue: mrrAmount,
+          projectedMrr: mrrAmount,
+          ...(isHistorical ? {} : {
+            forecastIncome: mrrAmount, // Only MRR for forecast
+            forecastExpenses: expenses,
+            forecastNetCashflow: mrrAmount - expenses
+          })
+        });
+      }
+
+      setData(dataPoints);
+    } catch (error) {
+      console.error('Error generating enhanced data:', error);
+      toast({
+        title: "Fout",
+        description: "Kon enhanced data niet laden",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('nl-NL', {
@@ -69,12 +166,14 @@ export const EnhancedCashflowChart = ({
                     style={{ backgroundColor: entry.color }}
                   />
                   <span className="text-sm text-muted-foreground">
-                    {entry.name === 'income' ? 'Inkomsten' :
-                     entry.name === 'expenses' ? 'Uitgaven' :
-                     entry.name === 'netCashflow' ? 'Netto Cashflow' :
-                     entry.name === 'forecastIncome' ? 'Verwachte Inkomsten' :
-                     entry.name === 'forecastExpenses' ? 'Verwachte Uitgaven' :
-                     'Verwachte Netto Cashflow'}
+                     {entry.name === 'income' ? 'Inkomsten' :
+                      entry.name === 'expenses' ? 'Uitgaven' :
+                      entry.name === 'netCashflow' ? 'Netto Cashflow' :
+                      entry.name === 'oneTimeRevenue' ? 'Eenmalige Deals' :
+                      entry.name === 'recurringRevenue' ? 'Recurring Revenue' :
+                      entry.name === 'forecastIncome' ? 'Verwachte Inkomsten' :
+                      entry.name === 'forecastExpenses' ? 'Verwachte Uitgaven' :
+                      'Verwachte Netto Cashflow'}
                   </span>
                 </div>
                 <span className={cn(
@@ -133,6 +232,27 @@ export const EnhancedCashflowChart = ({
   const latestData = data[data.length - 1];
   const trend = latestData?.netCashflow >= 0 ? "positive" : "negative";
 
+  if (loading) {
+    return (
+      <Card className={cn("col-span-1 lg:col-span-3", className)}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            {showRevenueBreakdown ? "Revenue Projectie" : "Cashflow Overzicht"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[400px] flex items-center justify-center">
+            <div className="text-center">
+              <div className="h-8 w-8 animate-spin border-2 border-primary border-t-transparent rounded-full mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Laden...</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className={cn("col-span-1 lg:col-span-3", className)}>
       <CardHeader className="pb-4">
@@ -140,7 +260,7 @@ export const EnhancedCashflowChart = ({
           <div className="space-y-1">
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5" />
-              Cashflow Overzicht
+              {showRevenueBreakdown ? "Revenue Projectie" : "Cashflow Overzicht"}
             </CardTitle>
             <div className="flex items-center gap-2">
               <Badge 
@@ -159,6 +279,17 @@ export const EnhancedCashflowChart = ({
           </div>
           
           <div className="flex items-center gap-2">
+            {showRevenueBreakdown && (
+              <Select value={chartType} onValueChange={(value: "cashflow" | "revenue") => setChartType(value)}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cashflow">Cashflow</SelectItem>
+                  <SelectItem value="revenue">Revenue</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
             <Button
               variant={zoomLevel === "all" ? "default" : "outline"}
               size="sm"
@@ -233,63 +364,108 @@ export const EnhancedCashflowChart = ({
               />
               
               {/* Actual data lines */}
-              <Line
-                type="monotone"
-                dataKey="income"
-                stroke="hsl(var(--success))"
-                strokeWidth={3}
-                dot={{ 
-                  fill: "hsl(var(--success))", 
-                  strokeWidth: 2, 
-                  r: 5,
-                  cursor: "pointer"
-                }}
-                activeDot={{ 
-                  r: 7, 
-                  stroke: "hsl(var(--success))",
-                  strokeWidth: 2,
-                  onClick: handleDataPointClick
-                }}
-                name="Inkomsten"
-              />
-              <Line
-                type="monotone"
-                dataKey="expenses"
-                stroke="hsl(var(--destructive))"
-                strokeWidth={3}
-                dot={{ 
-                  fill: "hsl(var(--destructive))", 
-                  strokeWidth: 2, 
-                  r: 5,
-                  cursor: "pointer"
-                }}
-                activeDot={{ 
-                  r: 7, 
-                  stroke: "hsl(var(--destructive))",
-                  strokeWidth: 2,
-                  onClick: handleDataPointClick
-                }}
-                name="Uitgaven"
-              />
-              <Line
-                type="monotone"
-                dataKey="netCashflow"
-                stroke="hsl(var(--primary))"
-                strokeWidth={4}
-                dot={{ 
-                  fill: "hsl(var(--primary))", 
-                  strokeWidth: 2, 
-                  r: 6,
-                  cursor: "pointer"
-                }}
-                activeDot={{ 
-                  r: 8, 
-                  stroke: "hsl(var(--primary))",
-                  strokeWidth: 3,
-                  onClick: handleDataPointClick
-                }}
-                name="Netto Cashflow"
-              />
+              {chartType === "revenue" && showRevenueBreakdown ? (
+                <>
+                  <Line
+                    type="monotone"
+                    dataKey="oneTimeRevenue"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={3}
+                    dot={{ 
+                      fill: "hsl(var(--primary))", 
+                      strokeWidth: 2, 
+                      r: 5,
+                      cursor: "pointer"
+                    }}
+                    activeDot={{ 
+                      r: 7, 
+                      stroke: "hsl(var(--primary))",
+                      strokeWidth: 2,
+                      onClick: handleDataPointClick
+                    }}
+                    name="Eenmalige Deals"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="recurringRevenue"
+                    stroke="hsl(var(--secondary))"
+                    strokeWidth={3}
+                    dot={{ 
+                      fill: "hsl(var(--secondary))", 
+                      strokeWidth: 2, 
+                      r: 5,
+                      cursor: "pointer"
+                    }}
+                    activeDot={{ 
+                      r: 7, 
+                      stroke: "hsl(var(--secondary))",
+                      strokeWidth: 2,
+                      onClick: handleDataPointClick
+                    }}
+                    name="Recurring Revenue"
+                  />
+                </>
+              ) : (
+                <>
+                  <Line
+                    type="monotone"
+                    dataKey="income"
+                    stroke="hsl(var(--success))"
+                    strokeWidth={3}
+                    dot={{ 
+                      fill: "hsl(var(--success))", 
+                      strokeWidth: 2, 
+                      r: 5,
+                      cursor: "pointer"
+                    }}
+                    activeDot={{ 
+                      r: 7, 
+                      stroke: "hsl(var(--success))",
+                      strokeWidth: 2,
+                      onClick: handleDataPointClick
+                    }}
+                    name="Inkomsten"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="expenses"
+                    stroke="hsl(var(--destructive))"
+                    strokeWidth={3}
+                    dot={{ 
+                      fill: "hsl(var(--destructive))", 
+                      strokeWidth: 2, 
+                      r: 5,
+                      cursor: "pointer"
+                    }}
+                    activeDot={{ 
+                      r: 7, 
+                      stroke: "hsl(var(--destructive))",
+                      strokeWidth: 2,
+                      onClick: handleDataPointClick
+                    }}
+                    name="Uitgaven"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="netCashflow"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={4}
+                    dot={{ 
+                      fill: "hsl(var(--primary))", 
+                      strokeWidth: 2, 
+                      r: 6,
+                      cursor: "pointer"
+                    }}
+                    activeDot={{ 
+                      r: 8, 
+                      stroke: "hsl(var(--primary))",
+                      strokeWidth: 3,
+                      onClick: handleDataPointClick
+                    }}
+                    name="Netto Cashflow"
+                  />
+                </>
+              )}
               
               {/* Forecast lines (dotted) */}
               {showForecast && (

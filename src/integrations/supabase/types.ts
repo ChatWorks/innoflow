@@ -75,14 +75,18 @@ export type Database = {
         Row: {
           amount: number
           client_name: string
+          contract_length: number | null
           created_at: string
+          deal_type: string
           description: string | null
           expected_date: string | null
           id: string
           invoice_date: string | null
+          monthly_amount: number | null
           payment_due_date: string | null
           payment_received_date: string | null
           probability: number | null
+          start_date: string | null
           status: string
           title: string
           updated_at: string
@@ -90,14 +94,18 @@ export type Database = {
         Insert: {
           amount: number
           client_name: string
+          contract_length?: number | null
           created_at?: string
+          deal_type?: string
           description?: string | null
           expected_date?: string | null
           id?: string
           invoice_date?: string | null
+          monthly_amount?: number | null
           payment_due_date?: string | null
           payment_received_date?: string | null
           probability?: number | null
+          start_date?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -105,14 +113,18 @@ export type Database = {
         Update: {
           amount?: number
           client_name?: string
+          contract_length?: number | null
           created_at?: string
+          deal_type?: string
           description?: string | null
           expected_date?: string | null
           id?: string
           invoice_date?: string | null
+          monthly_amount?: number | null
           payment_due_date?: string | null
           payment_received_date?: string | null
           probability?: number | null
+          start_date?: string | null
           status?: string
           title?: string
           updated_at?: string
@@ -190,6 +202,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      recurring_revenue: {
+        Row: {
+          created_at: string
+          deal_id: string
+          end_date: string | null
+          id: string
+          is_active: boolean
+          monthly_amount: number
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deal_id: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          monthly_amount: number
+          start_date: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deal_id?: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          monthly_amount?: number
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_revenue_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

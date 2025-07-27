@@ -7,7 +7,9 @@ import { FixedCostsList } from "./FixedCostsList";
 import { TimeFilter, TimePeriod } from "./TimeFilter";
 import { AddFixedCostModal } from "./AddFixedCostModal";
 import { AddDealModal } from "./AddDealModal";
+import { MrrWidget } from "./MrrWidget";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { EnhancedCashflowChart } from "./EnhancedCashflowChart";
 import { useAuth } from "@/hooks/useAuth";
 import { Euro, TrendingUp, Clock, Briefcase, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -144,6 +146,11 @@ export const EnhancedDashboard = () => {
           />
         </div>
 
+        {/* MRR Widget */}
+        <div className="mb-8">
+          <MrrWidget />
+        </div>
+
         {/* Main Content Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
@@ -156,7 +163,11 @@ export const EnhancedDashboard = () => {
           <TabsContent value="overview">
             {/* Charts and Recent Data */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
-              <CashflowChart data={cashflowData} timeframe={period === "day" ? "week" : period} />
+              <EnhancedCashflowChart 
+                data={cashflowData} 
+                timeframe={period === "day" ? "week" : period === "year" ? "quarter" : period}
+                showRevenueBreakdown={true}
+              />
               <RecentDeals 
                 deals={data.deals.slice(0, 5)} 
                 onDealsUpdate={handleDealsUpdate}

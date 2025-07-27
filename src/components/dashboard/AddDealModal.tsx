@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus } from "lucide-react";
@@ -22,7 +23,11 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
     amount: "",
     status: "potential",
     expected_date: "",
-    description: ""
+    description: "",
+    deal_type: "one_time",
+    monthly_amount: "",
+    contract_length: "",
+    start_date: ""
   });
   const { toast } = useToast();
 
@@ -38,7 +43,11 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
         status: formData.status,
         expected_date: formData.expected_date || null,
         description: formData.description || null,
-        probability: formData.status === "potential" ? 50 : formData.status === "confirmed" ? 80 : 100
+        probability: formData.status === "potential" ? 50 : formData.status === "confirmed" ? 80 : 100,
+        deal_type: formData.deal_type,
+        monthly_amount: formData.deal_type === "recurring" ? parseFloat(formData.monthly_amount) : null,
+        contract_length: formData.deal_type === "recurring" ? parseInt(formData.contract_length) : null,
+        start_date: formData.deal_type === "recurring" ? formData.start_date : null
       };
 
       // Add payment_received_date if status is paid
@@ -59,6 +68,11 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
         await createCashflowEntry(dealResult.id, parseFloat(formData.amount), formData.title);
       }
 
+      // If it's a recurring deal and confirmed/paid, create recurring revenue entry
+      if (formData.deal_type === "recurring" && (formData.status === "confirmed" || formData.status === "paid") && dealResult) {
+        await createRecurringRevenueEntry(dealResult.id, parseFloat(formData.monthly_amount), formData.start_date, parseInt(formData.contract_length));
+      }
+
       toast({
         title: "Deal toegevoegd",
         description: "De deal is succesvol toegevoegd aan je pipeline.",
@@ -70,7 +84,11 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
         amount: "",
         status: "potential",
         expected_date: "",
-        description: ""
+        description: "",
+        deal_type: "one_time",
+        monthly_amount: "",
+        contract_length: "",
+        start_date: ""
       });
       setOpen(false);
       onSuccess?.();
@@ -106,6 +124,27 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
     }
   };
 
+  const createRecurringRevenueEntry = async (dealId: string, monthlyAmount: number, startDate: string, contractLength: number) => {
+    try {
+      const endDate = new Date(startDate);
+      endDate.setMonth(endDate.getMonth() + contractLength);
+
+      const { error } = await supabase
+        .from("recurring_revenue")
+        .insert({
+          deal_id: dealId,
+          monthly_amount: monthlyAmount,
+          start_date: startDate,
+          end_date: endDate.toISOString().split('T')[0],
+          is_active: true
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error creating recurring revenue entry:", error);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -119,6 +158,24 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
           <DialogTitle>Nieuwe Deal</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-3">
+            <Label>Deal Type</Label>
+            <RadioGroup
+              value={formData.deal_type}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, deal_type: value }))}
+              className="flex gap-6"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="one_time" id="one_time" />
+                <Label htmlFor="one_time">Eenmalig Project</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="recurring" id="recurring" />
+                <Label htmlFor="recurring">Recurring Revenue (MRR)</Label>
+              </div>
+            </RadioGroup>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="title">Deal Naam</Label>
             <Input
@@ -142,7 +199,9 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="amount">Bedrag (€)</Label>
+            <Label htmlFor="amount">
+              {formData.deal_type === "recurring" ? "Totaal Contract Waarde (€)" : "Bedrag (€)"}
+            </Label>
             <Input
               id="amount"
               type="number"
@@ -154,6 +213,50 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
               required
             />
           </div>
+
+          {formData.deal_type === "recurring" && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="monthly_amount">Maandelijks Bedrag (€)</Label>
+                <Input
+                  id="monthly_amount"
+                  type="number"
+                  value={formData.monthly_amount}
+                  onChange={(e) => setFormData(prev => ({ ...prev, monthly_amount: e.target.value }))}
+                  placeholder="0,00"
+                  min="0"
+                  step="0.01"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="start_date">Start Datum</Label>
+                  <Input
+                    id="start_date"
+                    type="date"
+                    value={formData.start_date}
+                    onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="contract_length">Contract Lengte (maanden)</Label>
+                  <Input
+                    id="contract_length"
+                    type="number"
+                    value={formData.contract_length}
+                    onChange={(e) => setFormData(prev => ({ ...prev, contract_length: e.target.value }))}
+                    placeholder="12"
+                    min="1"
+                    required
+                  />
+                </div>
+              </div>
+            </>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
