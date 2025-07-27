@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
-import { ChatInterface } from "@/components/ai/ChatInterface";
+import { ModernChatInterface } from "@/components/ai/ModernChatInterface";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
@@ -41,7 +41,7 @@ export const AIAdvisorPage = () => {
         </div>
 
         <div className="space-y-6">
-          <ChatInterface
+          <ModernChatInterface
             context={{
               monthlyIncome: metrics.monthlyIncome,
               monthlyExpenses: metrics.monthlyExpenses,
