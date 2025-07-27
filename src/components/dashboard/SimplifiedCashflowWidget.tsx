@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MonthSelector } from "./MonthSelector";
-import { useDailyCosts } from "@/hooks/useDailyCosts";
+import { TimeRangeSelector, TimePeriodType } from "./TimeRangeSelector";
+import { useEnhancedCashflowData } from "@/hooks/useEnhancedCashflowData";
 import { 
   LineChart, 
   Line, 
@@ -21,8 +21,9 @@ interface SimplifiedCashflowWidgetProps {
 }
 
 export const SimplifiedCashflowWidget = ({ className }: SimplifiedCashflowWidgetProps) => {
-  const [selectedMonth, setSelectedMonth] = useState(new Date());
-  const { data, loading, summary } = useDailyCosts(selectedMonth);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [periodType, setPeriodType] = useState<TimePeriodType>("month");
+  const { data, loading, summary } = useEnhancedCashflowData(periodType, selectedDate);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('nl-NL', {
@@ -33,9 +34,26 @@ export const SimplifiedCashflowWidget = ({ className }: SimplifiedCashflowWidget
     }).format(value);
   };
 
-  const formatDay = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.getDate().toString();
+  const formatAxisLabel = (value: string, data?: any) => {
+    if (data && data.period) {
+      return data.period;
+    }
+    
+    // Fallback formatting based on period type
+    const date = new Date(value);
+    switch (periodType) {
+      case "day":
+        return date.getDate().toString();
+      case "month":
+        return date.toLocaleDateString('nl-NL', { month: 'short' });
+      case "quarter":
+        const quarter = Math.floor(date.getMonth() / 3) + 1;
+        return `Q${quarter}`;
+      case "year":
+        return date.getFullYear().toString();
+      default:
+        return date.getDate().toString();
+    }
   };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -94,7 +112,7 @@ export const SimplifiedCashflowWidget = ({ className }: SimplifiedCashflowWidget
           <div className="space-y-1">
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              Dagelijkse Cashflow
+              Cashflow Overzicht
             </CardTitle>
             <div className="flex items-center gap-2">
               <Badge 
@@ -109,14 +127,16 @@ export const SimplifiedCashflowWidget = ({ className }: SimplifiedCashflowWidget
                 {summary.totalNet >= 0 ? "Positief" : "Negatief"}
               </Badge>
               <span className="text-sm text-muted-foreground">
-                Maandtotaal: {formatCurrency(summary.totalNet)}
+                Totaal: {formatCurrency(summary.totalNet)}
               </span>
             </div>
           </div>
           
-          <MonthSelector
-            selectedDate={selectedMonth}
-            onDateChange={setSelectedMonth}
+          <TimeRangeSelector
+            period={periodType}
+            onPeriodChange={setPeriodType}
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
           />
         </div>
 
@@ -149,12 +169,11 @@ export const SimplifiedCashflowWidget = ({ className }: SimplifiedCashflowWidget
                 opacity={0.3}
               />
               <XAxis 
-                dataKey="date"
+                dataKey="period"
                 stroke="hsl(var(--muted-foreground))"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={formatDay}
               />
               <YAxis 
                 stroke="hsl(var(--muted-foreground))"
