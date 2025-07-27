@@ -30,16 +30,19 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
+    conversationId,
     sessions,
-    currentSession,
     messages,
     loading: sessionsLoading,
-    createSession,
-    addMessage,
-    updateSessionTitle,
-    deleteSession,
-    switchToSession,
+    sendingMessage,
+    sendMessage,
+    createNewConversation,
+    selectConversation,
+    updateConversationTitle,
+    deleteConversation,
   } = useChatSessions();
+  
+  const currentSession = sessions.find(s => s.conversation_id === conversationId) || null;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -52,71 +55,28 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
     }
   }, [messages]);
 
-  // Remove auto-creation of sessions - only create when user sends first message
-
-  const sendMessage = async () => {
-    if (!input.trim() || isLoading) return;
-
-    // Create session if none exists when user sends first message
-    let sessionToUse = currentSession;
-    if (!sessionToUse) {
-      sessionToUse = await createSession();
-      if (!sessionToUse) return;
-    }
+  const handleSendMessage = async () => {
+    if (!input.trim() || sendingMessage) return;
 
     const userMessage = input.trim();
     setInput('');
-    setIsLoading(true);
 
     try {
-      // Add user message to chat
-      await addMessage('user', userMessage, context);
-
-      // Call the AI advisor function
-      const { data, error } = await supabase.functions.invoke('ai-advisor', {
-        body: {
-          message: userMessage,
-          context: context,
-        },
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Er is een fout opgetreden bij het verkrijgen van een antwoord.');
-      }
-
-      // Add AI response to chat
-      if (data?.response) {
-        await addMessage('assistant', data.response);
-        
-        // Auto-generate title for new chats based on first user message
-        if (messages.length <= 1 && sessionToUse.title === 'Nieuwe Chat') {
-          const title = userMessage.length > 50 
-            ? userMessage.substring(0, 50) + '...'
-            : userMessage;
-          updateSessionTitle(sessionToUse.id, title);
-        }
-      }
+      await sendMessage(userMessage, 'month');
     } catch (error) {
       console.error('Error sending message:', error);
-      toast({
-        title: 'Fout',
-        description: error instanceof Error ? error.message : 'Er is een onverwachte fout opgetreden.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      handleSendMessage();
     }
   };
 
-  const handleNewChat = async () => {
-    await createSession();
+  const handleNewChat = () => {
+    createNewConversation();
   };
 
   const formatMessage = (content: string) => {
@@ -141,10 +101,10 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
       <ChatSidebar
         sessions={sessions}
         currentSession={currentSession}
-        onSessionSelect={switchToSession}
+        onSessionSelect={(session) => selectConversation(session.conversation_id)}
         onNewChat={handleNewChat}
-        onDeleteSession={deleteSession}
-        onUpdateTitle={updateSessionTitle}
+        onDeleteSession={deleteConversation}
+        onUpdateTitle={updateConversationTitle}
         isCollapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
@@ -285,7 +245,7 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
               </div>
             )}
 
-            {isLoading && (
+            {sendingMessage && (
               <div className="flex space-x-4 animate-fade-in">
                 <div className="flex-shrink-0">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-r from-primary/20 to-primary/10 flex items-center justify-center border-2 border-primary/20">
@@ -322,8 +282,8 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
                 disabled={isLoading}
               />
               <Button
-                onClick={sendMessage}
-                disabled={!input.trim() || isLoading}
+                onClick={handleSendMessage}
+                disabled={!input.trim() || sendingMessage}
                 size="icon"
                 className="absolute right-3 bottom-3 h-9 w-9 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-md hover:shadow-lg rounded-xl transition-all duration-200 hover:scale-105 disabled:hover:scale-100"
               >
