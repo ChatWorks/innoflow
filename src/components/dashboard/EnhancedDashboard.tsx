@@ -1,26 +1,42 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardHeader } from "./DashboardHeader";
-import { MetricCard } from "./MetricCard";
-import { CashflowChart } from "./CashflowChart";
+import { EnhancedMetricCard } from "./EnhancedMetricCard";
+import { EnhancedCashflowChart } from "./EnhancedCashflowChart";
+import { QuickInsightsWidget } from "./QuickInsightsWidget";
+import { EnhancedFilterBar, DateRange, FilterPreset } from "./EnhancedFilterBar";
+import { FloatingActionButton } from "./FloatingActionButton";
 import { RecentDeals } from "./RecentDeals";
 import { FixedCostsList } from "./FixedCostsList";
-import { TimeFilter, TimePeriod } from "./TimeFilter";
-import { AddFixedCostModal } from "./AddFixedCostModal";
-import { AddDealModal } from "./AddDealModal";
-import { useDashboardData } from "@/hooks/useDashboardData";
+import { useEnhancedDashboardData } from "@/hooks/useEnhancedDashboardData";
 import { useAuth } from "@/hooks/useAuth";
-import { Euro, TrendingUp, Clock, Briefcase, Loader2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { 
+  Euro, 
+  TrendingUp, 
+  Clock, 
+  Briefcase, 
+  Target,
+  PiggyBank,
+  Download,
+  Loader2
+} from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChatInterface } from "../ai/ChatInterface";
+import { MetricCardSkeleton, ChartSkeleton, DealListSkeleton, InsightsSkeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { startOfMonth, endOfMonth } from "date-fns";
 
 export const EnhancedDashboard = () => {
   const { user, signOut } = useAuth();
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [period, setPeriod] = useState<TimePeriod>("month");
+  const { toast } = useToast();
   
-  const { data, loading, metrics, cashflowData, refetch } = useDashboardData(period, currentDate);
+  // Enhanced state management
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date())
+  });
+  const [filterPreset, setFilterPreset] = useState<FilterPreset>("this-month");
+  
+  const { data, loading, metrics, cashflowData, refetch } = useEnhancedDashboardData(dateRange);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('nl-NL', {
@@ -43,25 +59,26 @@ export const EnhancedDashboard = () => {
     return "neutral";
   };
 
-  const handleDealsUpdate = () => {
-    refetch();
-  };
-
-  const handleFixedCostsUpdate = () => {
-    refetch();
+  const handleExport = () => {
+    toast({
+      title: "Export gestart",
+      description: "Je data wordt voorbereid voor download.",
+    });
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background animate-fade-in-scale">
         <DashboardHeader onLogout={signOut} userName={user?.email?.split("@")[0]} />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-              <p className="text-muted-foreground">Dashboard laden...</p>
-            </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <MetricCardSkeleton key={i} />
+            ))}
           </div>
+          <InsightsSkeleton />
+          <ChartSkeleton />
+          <DealListSkeleton />
         </div>
       </div>
     );
@@ -71,55 +88,58 @@ export const EnhancedDashboard = () => {
     <div className="min-h-screen bg-background">
       <DashboardHeader onLogout={signOut} userName={user?.email?.split("@")[0]} />
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold font-manrope text-foreground mb-2">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* Enhanced Header */}
+        <div className="animate-fade-in-scale">
+          <h1 className="text-4xl font-bold font-manrope text-foreground mb-2">
             Cashflow Dashboard
-          </h2>
-          <p className="text-muted-foreground">
-            Real-time overzicht van je financiële situatie en cashflow projecties
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Professioneel overzicht van je financiële situatie en voorspellingen
           </p>
         </div>
 
-        {/* Time Filter */}
-        <div className="mb-8">
-          <TimeFilter
-            period={period}
-            onPeriodChange={setPeriod}
-            currentDate={currentDate}
-            onDateChange={setCurrentDate}
-          />
-        </div>
+        {/* Enhanced Filter Bar */}
+        <EnhancedFilterBar
+          currentRange={dateRange}
+          onRangeChange={setDateRange}
+          currentPreset={filterPreset}
+          onPresetChange={setFilterPreset}
+        />
 
-        {/* Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <MetricCard
+        {/* Enhanced Metrics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in-scale">
+          <EnhancedMetricCard
             title="Inkomsten Deze Periode"
-            value={formatCurrency(metrics.monthlyIncome)}
-            icon={<Euro />}
+            value={formatCurrency(metrics.currentIncome)}
+            icon={<Euro className="h-5 w-5" />}
             colorScheme="revenue"
             change={{
-              value: calculateChange(metrics.monthlyIncome, metrics.previousIncome),
-              type: getChangeType(metrics.monthlyIncome, metrics.previousIncome),
+              value: calculateChange(metrics.currentIncome, metrics.previousIncome),
+              type: getChangeType(metrics.currentIncome, metrics.previousIncome),
               period: "vs vorige periode"
             }}
+            progress={{
+              current: metrics.currentIncome,
+              target: 50000,
+              label: "Maandtarget"
+            }}
           />
-          <MetricCard
+          <EnhancedMetricCard
             title="Uitgaven Deze Periode"
-            value={formatCurrency(metrics.monthlyExpenses)}
-            icon={<TrendingUp />}
+            value={formatCurrency(metrics.currentExpenses)}
+            icon={<TrendingUp className="h-5 w-5" />}
             colorScheme="expense"
             change={{
-              value: calculateChange(metrics.monthlyExpenses, metrics.previousExpenses),
-              type: getChangeType(metrics.previousExpenses, metrics.monthlyExpenses), // Inverted for expenses
+              value: calculateChange(metrics.currentExpenses, metrics.previousExpenses),
+              type: getChangeType(metrics.previousExpenses, metrics.currentExpenses),
               period: "vs vorige periode"
             }}
           />
-          <MetricCard
+          <EnhancedMetricCard
             title="Netto Cashflow"
             value={formatCurrency(metrics.netCashflow)}
-            icon={<Briefcase />}
+            icon={<Briefcase className="h-5 w-5" />}
             colorScheme={metrics.netCashflow >= 0 ? "revenue" : "expense"}
             change={{
               value: calculateChange(metrics.netCashflow, metrics.previousNetCashflow),
@@ -127,20 +147,30 @@ export const EnhancedDashboard = () => {
               period: "vs vorige periode"
             }}
           />
-          <MetricCard
+          <EnhancedMetricCard
             title="Pipeline Waarde"
-            value={formatCurrency(metrics.pendingValue)}
-            icon={<Clock />}
+            value={formatCurrency(metrics.pipelineValue)}
+            icon={<Clock className="h-5 w-5" />}
             colorScheme="pending"
             change={{
-              value: calculateChange(metrics.pendingValue, metrics.previousPending),
-              type: getChangeType(metrics.pendingValue, metrics.previousPending),
+              value: calculateChange(metrics.pipelineValue, metrics.previousPending),
+              type: getChangeType(metrics.pipelineValue, metrics.previousPending),
               period: "vs vorige periode"
             }}
           />
         </div>
 
-        {/* Main Content Tabs */}
+        {/* Quick Insights Widget */}
+        <QuickInsightsWidget
+          monthlyIncome={metrics.currentIncome}
+          monthlyExpenses={metrics.currentExpenses}
+          netCashflow={metrics.netCashflow}
+          pipelineValue={metrics.pipelineValue}
+          deals={data.deals}
+          fixedCosts={data.fixedCosts}
+        />
+
+        {/* Enhanced Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview">Overzicht</TabsTrigger>
@@ -149,99 +179,53 @@ export const EnhancedDashboard = () => {
             <TabsTrigger value="advisor">AI Adviseur</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview">
-            {/* Charts and Recent Data */}
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
-              <CashflowChart data={cashflowData} timeframe={period === "day" ? "week" : period} />
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+              <EnhancedCashflowChart 
+                data={cashflowData} 
+                className="lg:col-span-3"
+                showForecast={true}
+              />
               <RecentDeals 
                 deals={data.deals.slice(0, 5)} 
-                onDealsUpdate={handleDealsUpdate}
+                onDealsUpdate={refetch}
+                className="lg:col-span-2"
               />
-            </div>
-
-            {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Nieuwe Deal</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Voeg een nieuwe deal toe aan je pipeline
-                  </p>
-                  <AddDealModal onSuccess={handleDealsUpdate} />
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Vaste Kosten</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Beheer je terugkerende uitgaven
-                  </p>
-                  <AddFixedCostModal onSuccess={handleFixedCostsUpdate} />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Cashflow Projectie</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Bekijk toekomstige cashflow trends
-                  </p>
-                  <Button variant="outline" className="w-full">
-                    Projectie Bekijken
-                  </Button>
-                </CardContent>
-              </Card>
             </div>
           </TabsContent>
 
           <TabsContent value="deals">
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h3 className="text-2xl font-semibold">Deal Management</h3>
-                <AddDealModal onSuccess={handleDealsUpdate} />
-              </div>
-              <RecentDeals 
-                deals={data.deals} 
-                onDealsUpdate={handleDealsUpdate}
-              />
-            </div>
+            <RecentDeals 
+              deals={data.deals} 
+              onDealsUpdate={refetch}
+            />
           </TabsContent>
 
           <TabsContent value="costs">
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h3 className="text-2xl font-semibold">Vaste Kosten Overzicht</h3>
-              </div>
-              <FixedCostsList />
-            </div>
+            <FixedCostsList />
           </TabsContent>
 
           <TabsContent value="advisor">
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h3 className="text-2xl font-semibold">AI Financieel Adviseur</h3>
-              </div>
-              <ChatInterface
-                context={{
-                  monthlyIncome: metrics.monthlyIncome,
-                  monthlyExpenses: metrics.monthlyExpenses,
-                  netCashflow: metrics.netCashflow,
-                  pipelineValue: metrics.pendingValue,
-                  activeDeals: data.deals.filter(deal => deal.status !== 'paid').length,
-                  fixedCosts: data.fixedCosts.length
-                }}
-              />
-            </div>
+            <ChatInterface
+              context={{
+                monthlyIncome: metrics.currentIncome,
+                monthlyExpenses: metrics.currentExpenses,
+                netCashflow: metrics.netCashflow,
+                pipelineValue: metrics.pipelineValue,
+                activeDeals: data.deals.filter(deal => deal.status !== 'paid').length,
+                fixedCosts: data.fixedCosts.length
+              }}
+            />
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Floating Action Button */}
+      <FloatingActionButton
+        onRefresh={refetch}
+        onExport={handleExport}
+        onQuickDeal={refetch}
+      />
     </div>
   );
 };
