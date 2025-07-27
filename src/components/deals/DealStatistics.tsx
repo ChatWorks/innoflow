@@ -1,5 +1,6 @@
-import { TrendingUp, DollarSign, Clock, CheckCircle } from "lucide-react";
+import { TrendingUp, DollarSign, CheckCircle, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { AddDealModal } from "../dashboard/AddDealModal";
 
 interface Deal {
   id: string;
@@ -13,9 +14,10 @@ interface Deal {
 
 interface DealStatisticsProps {
   deals: Deal[];
+  onDealsUpdate?: () => void;
 }
 
-export const DealStatistics = ({ deals }: DealStatisticsProps) => {
+export const DealStatistics = ({ deals, onDealsUpdate }: DealStatisticsProps) => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('nl-NL', {
       style: 'currency',
@@ -42,14 +44,6 @@ export const DealStatistics = ({ deals }: DealStatisticsProps) => {
       description: `${deals.length} deals`,
       color: "bg-gradient-to-r from-primary/10 to-primary/5",
       iconColor: "text-primary"
-    },
-    {
-      title: "Potentiële Deals",
-      value: potentialDeals.toString(),
-      icon: Clock,
-      description: "Nog te bevestigen",
-      color: "bg-gradient-to-r from-orange-500/10 to-orange-500/5",
-      iconColor: "text-orange-600"
     },
     {
       title: "Bevestigde Waarde",
@@ -95,6 +89,14 @@ export const DealStatistics = ({ deals }: DealStatisticsProps) => {
           </CardContent>
         </Card>
       ))}
+      
+      {/* Add Deal Button */}
+      <Card className="border-2 border-dashed border-primary/30 hover:border-primary/50 hover-scale animate-fade-in bg-gradient-to-r from-primary/5 to-primary/10 group cursor-pointer transition-all duration-200"
+            style={{ animationDelay: "300ms" }}>
+        <CardContent className="p-6 h-full flex items-center justify-center">
+          <AddDealModal onSuccess={onDealsUpdate} />
+        </CardContent>
+      </Card>
     </div>
   );
 };

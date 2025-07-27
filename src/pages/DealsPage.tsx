@@ -130,7 +130,7 @@ export const DealsPage = () => {
         {data.deals && data.deals.length > 0 ? (
           <>
             {/* Statistics */}
-            <DealStatistics deals={data.deals} />
+            <DealStatistics deals={data.deals} onDealsUpdate={handleDealsUpdate} />
 
             {/* Filters */}
             <DealFilters

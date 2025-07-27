@@ -1,5 +1,7 @@
-import { TrendingDown, Clock, Calendar, DollarSign } from "lucide-react";
+import { TrendingDown, Clock, Calendar, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { AddFixedCostModal } from "../dashboard/AddFixedCostModal";
 
 interface FixedCost {
   id: string;
@@ -15,9 +17,10 @@ interface FixedCost {
 
 interface FixedCostStatisticsProps {
   fixedCosts: FixedCost[];
+  onFixedCostsUpdate?: () => void;
 }
 
-export const FixedCostStatistics = ({ fixedCosts }: FixedCostStatisticsProps) => {
+export const FixedCostStatistics = ({ fixedCosts, onFixedCostsUpdate }: FixedCostStatisticsProps) => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('nl-NL', {
       style: 'currency',
@@ -88,14 +91,6 @@ export const FixedCostStatistics = ({ fixedCosts }: FixedCostStatisticsProps) =>
       iconColor: "text-orange-600"
     },
     {
-      title: "Categorieën",
-      value: getCategoryCounts().toString(),
-      icon: DollarSign,
-      description: "Verschillende types",
-      color: "bg-gradient-to-r from-blue-500/10 to-blue-500/5",
-      iconColor: "text-blue-600"
-    },
-    {
       title: "Binnenkort Verlopen",
       value: getUpcomingExpirations().toString(),
       icon: Clock,
@@ -131,6 +126,14 @@ export const FixedCostStatistics = ({ fixedCosts }: FixedCostStatisticsProps) =>
           </CardContent>
         </Card>
       ))}
+      
+      {/* Add Fixed Cost Button */}
+      <Card className="border-2 border-dashed border-primary/30 hover:border-primary/50 hover-scale animate-fade-in bg-gradient-to-r from-primary/5 to-primary/10 group cursor-pointer transition-all duration-200"
+            style={{ animationDelay: "300ms" }}>
+        <CardContent className="p-6 h-full flex items-center justify-center">
+          <AddFixedCostModal onSuccess={onFixedCostsUpdate} />
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -135,7 +135,7 @@ export const FixedCostsPage = () => {
         {data.fixedCosts && data.fixedCosts.length > 0 ? (
           <>
             {/* Statistics */}
-            <FixedCostStatistics fixedCosts={data.fixedCosts} />
+            <FixedCostStatistics fixedCosts={data.fixedCosts} onFixedCostsUpdate={handleFixedCostsUpdate} />
 
             {/* Filters */}
             <FixedCostFilters
