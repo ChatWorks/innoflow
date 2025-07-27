@@ -106,11 +106,13 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
       setLoading(true);
       const { start, end } = getDateRange(currentDate, period);
 
-      // Fetch deals
+      // Fetch deals within the selected date range (based on created_at date)
       const { data: deals, error: dealsError } = await supabase
         .from("deals")
         .select("*")
         .eq("user_id", user.id)
+        .gte("created_at", start.toISOString())
+        .lte("created_at", end.toISOString())
         .order("created_at", { ascending: false });
 
       if (dealsError) {
