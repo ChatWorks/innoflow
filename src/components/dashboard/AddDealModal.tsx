@@ -25,6 +25,7 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
     amount: "",
     status: "potential",
     expected_date: "",
+    payment_due_date: "",
     description: "",
     deal_type: "one_time",
     monthly_amount: "",
@@ -54,6 +55,7 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
         amount: parseFloat(formData.amount),
         status: formData.status,
         expected_date: formData.expected_date || null,
+        payment_due_date: formData.payment_due_date || null,
         description: formData.description || null,
         probability: formData.status === "potential" ? 50 : formData.status === "confirmed" ? 80 : 100,
         deal_type: formData.deal_type,
@@ -99,6 +101,7 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
         amount: "",
         status: "potential",
         expected_date: "",
+        payment_due_date: "",
         description: "",
         deal_type: "one_time",
         monthly_amount: "",
@@ -327,19 +330,32 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
                 onChange={(e) => setFormData(prev => ({ ...prev, expected_date: e.target.value }))}
                 className="h-10"
               />
+              <p className="text-xs text-muted-foreground">Algemene verwachte datum voor de deal</p>
             </div>
 
-            <div className="space-y-2 md:row-span-1">
-              <Label htmlFor="description">Beschrijving</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Optionele beschrijving van de deal..."
-                rows={2}
-                className="resize-none"
+            <div className="space-y-2">
+              <Label htmlFor="payment_due_date">Verwachte Betaaldatum</Label>
+              <Input
+                id="payment_due_date"
+                type="date"
+                value={formData.payment_due_date}
+                onChange={(e) => setFormData(prev => ({ ...prev, payment_due_date: e.target.value }))}
+                className="h-10"
               />
+              <p className="text-xs text-muted-foreground">Datum waarop betaling verwacht wordt</p>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Beschrijving</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              placeholder="Optionele beschrijving van de deal..."
+              rows={2}
+              className="resize-none"
+            />
           </div>
 
           {/* Action Buttons */}

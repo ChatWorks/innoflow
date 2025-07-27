@@ -148,17 +148,23 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
 
       // Filter deals based on relevant dates within the selected period
       const filteredDeals = (deals || []).filter(deal => {
-        // Use the most relevant date for each deal based on its status
+        // Use the most relevant date for each deal based on its status and available dates
         let relevantDate: Date | null = null;
         
         if (deal.status === 'paid' && deal.payment_received_date) {
+          // For paid deals, use actual payment date
           relevantDate = new Date(deal.payment_received_date);
+        } else if (deal.payment_due_date) {
+          // For unpaid deals, use payment due date if available
+          relevantDate = new Date(deal.payment_due_date);
         } else if (deal.status === 'invoiced' && deal.invoice_date) {
+          // For invoiced deals without payment due date, use invoice date
           relevantDate = new Date(deal.invoice_date);
         } else if (deal.expected_date) {
+          // Fallback to expected date
           relevantDate = new Date(deal.expected_date);
         } else {
-          // Fallback to creation date if no other relevant date is available
+          // Final fallback to creation date
           relevantDate = new Date(deal.created_at);
         }
         
