@@ -44,15 +44,21 @@ export const useEnhancedCashflowData = (periodType: TimePeriodType, selectedDate
   const getDateRange = (date: Date, type: TimePeriodType) => {
     switch (type) {
       case "day":
-        return { start: startOfDay(date), end: endOfDay(date) };
+        // Show full month for day view
+        return { start: startOfMonth(date), end: endOfMonth(date) };
       case "month":
-        return { start: startOfMonth(date), end: endOfMonth(date) };
-      case "quarter":
-        return { start: startOfQuarter(date), end: endOfQuarter(date) };
-      case "year":
+        // Show full year for month view
         return { start: startOfYear(date), end: endOfYear(date) };
+      case "quarter":
+        // Show full year for quarter view
+        return { start: startOfYear(date), end: endOfYear(date) };
+      case "year":
+        // Show 5 years: 2 before, current, 2 after
+        const startYear = new Date(date.getFullYear() - 2, 0, 1);
+        const endYear = new Date(date.getFullYear() + 2, 11, 31);
+        return { start: startYear, end: endYear };
       default:
-        return { start: startOfMonth(date), end: endOfMonth(date) };
+        return { start: startOfYear(date), end: endOfYear(date) };
     }
   };
 
