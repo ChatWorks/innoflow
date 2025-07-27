@@ -147,12 +147,6 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
 
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col min-w-0">
-        {/* Simple header */}
-        <div className="flex-shrink-0 h-14 border-b border-border bg-background flex items-center justify-center">
-          <h2 className="text-lg font-semibold text-foreground">
-            {currentSession?.title || 'Nieuwe Chat'}
-          </h2>
-        </div>
 
         {/* Messages */}
         <ScrollArea className="flex-1 p-4">
