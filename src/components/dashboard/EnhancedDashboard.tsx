@@ -8,7 +8,7 @@ import { TimeFilter, TimePeriod } from "./TimeFilter";
 import { AddFixedCostModal } from "./AddFixedCostModal";
 import { AddDealModal } from "./AddDealModal";
 import { useDashboardData } from "@/hooks/useDashboardData";
-import { EnhancedCashflowChart } from "./EnhancedCashflowChart";
+import { SimplifiedCashflowWidget } from "./SimplifiedCashflowWidget";
 import { useAuth } from "@/hooks/useAuth";
 import { Euro, TrendingUp, Clock, Briefcase, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -156,13 +156,9 @@ export const EnhancedDashboard = () => {
           </TabsList>
 
           <TabsContent value="overview">
-            {/* Charts and Recent Data */}
+            {/* Simplified Cashflow and Recent Data */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
-              <EnhancedCashflowChart 
-                data={cashflowData} 
-                timeframe={period === "day" ? "week" : period === "year" ? "quarter" : period}
-                showRevenueBreakdown={true}
-              />
+              <SimplifiedCashflowWidget />
               <RecentDeals 
                 deals={data.deals.slice(0, 5)} 
                 onDealsUpdate={handleDealsUpdate}
