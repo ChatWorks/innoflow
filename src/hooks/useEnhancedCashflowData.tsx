@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { TimePeriodType } from "@/components/dashboard/TimeRangeSelector";
+import { calculateFixedCostsForPeriod, calculateDealsForPeriod, PeriodType } from "@/utils/cashflowCalculations";
 import { 
   startOfDay, 
   endOfDay, 
@@ -103,14 +104,11 @@ export const useEnhancedCashflowData = (periodType: TimePeriodType, selectedDate
       try {
         const { start, end } = getDateRange(selectedDate, periodType);
         
-        // Fetch deals
+        // Fetch all deals (not just paid ones within date range)
         const { data: deals, error: dealsError } = await supabase
           .from('deals')
           .select('*')
-          .eq('user_id', user?.id)
-          .gte('payment_received_date', start.toISOString().split('T')[0])
-          .lte('payment_received_date', end.toISOString().split('T')[0])
-          .eq('status', 'paid');
+          .eq('user_id', user?.id);
 
         if (dealsError) throw dealsError;
 
@@ -143,58 +141,21 @@ export const useEnhancedCashflowData = (periodType: TimePeriodType, selectedDate
             ? endOfQuarter(intervalDate)
             : endOfYear(intervalDate);
 
-          // Calculate deals for this interval
-          const intervalDeals = deals?.filter(deal => {
-            if (!deal.payment_received_date) return false;
-            const dealDate = new Date(deal.payment_received_date);
-            return isWithinInterval(dealDate, { start: intervalStart, end: intervalEnd });
-          }) || [];
+          // Calculate deals for this interval using unified logic
+          const totalDeals = calculateDealsForPeriod(
+            deals || [],
+            periodType as PeriodType,
+            intervalStart,
+            intervalEnd
+          );
 
-          const totalDeals = intervalDeals.reduce((sum, deal) => sum + (Number(deal.amount) || 0), 0);
-
-          // Calculate fixed costs for this interval
-          let totalFixedCosts = 0;
-          fixedCosts?.forEach(cost => {
-            const costStartDate = new Date(cost.start_date);
-            const costEndDate = cost.end_date ? new Date(cost.end_date) : new Date('2099-12-31');
-            
-            // Check if the cost period overlaps with our interval
-            if (costStartDate <= intervalEnd && costEndDate >= intervalStart) {
-              switch (periodType) {
-                case "day":
-                  // For daily view, divide monthly costs by days in month
-                  if (cost.frequency === 'monthly') {
-                    const daysInMonth = new Date(intervalDate.getFullYear(), intervalDate.getMonth() + 1, 0).getDate();
-                    totalFixedCosts += Number(cost.amount) / daysInMonth;
-                  } else if (cost.frequency === 'yearly') {
-                    const daysInYear = 365;
-                    totalFixedCosts += Number(cost.amount) / daysInYear;
-                  }
-                  break;
-                case "month":
-                  if (cost.frequency === 'monthly') {
-                    totalFixedCosts += Number(cost.amount);
-                  } else if (cost.frequency === 'yearly') {
-                    totalFixedCosts += Number(cost.amount) / 12;
-                  }
-                  break;
-                case "quarter":
-                  if (cost.frequency === 'monthly') {
-                    totalFixedCosts += Number(cost.amount) * 3;
-                  } else if (cost.frequency === 'yearly') {
-                    totalFixedCosts += Number(cost.amount) / 4;
-                  }
-                  break;
-                case "year":
-                  if (cost.frequency === 'monthly') {
-                    totalFixedCosts += Number(cost.amount) * 12;
-                  } else if (cost.frequency === 'yearly') {
-                    totalFixedCosts += Number(cost.amount);
-                  }
-                  break;
-              }
-            }
-          });
+          // Calculate fixed costs for this interval using unified logic
+          const totalFixedCosts = calculateFixedCostsForPeriod(
+            fixedCosts || [],
+            periodType as PeriodType,
+            intervalStart,
+            intervalEnd
+          );
 
           return {
             date: format(intervalDate, 'yyyy-MM-dd'),

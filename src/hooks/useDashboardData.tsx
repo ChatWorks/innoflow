@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { TimePeriod } from "@/components/dashboard/TimeFilter";
+import { calculateFixedCostsForPeriod, PeriodType } from "@/utils/cashflowCalculations";
 
 interface DashboardData {
   deals: any[];
@@ -202,7 +203,7 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
     const { start, end } = getDateRange(currentDate, period);
     const { start: prevStart, end: prevEnd } = getPreviousDateRange(currentDate, period);
 
-    // Calculate current period metrics
+    // Calculate current period metrics using unified logic
     const monthlyIncome = data.cashflowEntries
       .filter(entry => entry.type === "income")
       .reduce((sum, entry) => sum + Number(entry.amount), 0);
@@ -211,28 +212,13 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
       .filter(entry => entry.type === "expense")
       .reduce((sum, entry) => sum + Number(entry.amount), 0);
 
-    // Add fixed costs to expenses for current period
-    const fixedCostExpenses = data.fixedCosts.reduce((sum, cost) => {
-      const costStart = new Date(cost.start_date);
-      if (costStart <= end) {
-        let monthlyAmount = cost.amount;
-        if (cost.frequency === "yearly") {
-          monthlyAmount = cost.amount / 12;
-        } else if (cost.frequency === "quarterly") {
-          monthlyAmount = cost.amount / 3;
-        }
-        
-        // Calculate how much of the period is covered
-        if (period === "day") {
-          monthlyAmount = monthlyAmount / 30; // Rough daily amount
-        } else if (period === "week") {
-          monthlyAmount = monthlyAmount / 4; // Rough weekly amount
-        }
-        
-        return sum + monthlyAmount;
-      }
-      return sum;
-    }, 0);
+    // Calculate fixed costs for current period using unified logic
+    const fixedCostExpenses = calculateFixedCostsForPeriod(
+      data.fixedCosts,
+      period as PeriodType,
+      start,
+      end
+    );
 
     const totalExpenses = monthlyExpenses + fixedCostExpenses;
 
