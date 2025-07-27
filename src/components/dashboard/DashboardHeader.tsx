@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Calendar, LogOut, Settings, User } from "lucide-react";
-import { NavLink } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,40 +28,6 @@ export const DashboardHeader = ({ onLogout, userName = "Team Member" }: Dashboar
               </h1>
             </div>
             
-            <nav className="hidden md:flex space-x-6">
-              <NavLink 
-                to="/" 
-                className={({ isActive }) => `font-medium transition-colors ${
-                  isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Dashboard
-              </NavLink>
-              <NavLink 
-                to="/deals" 
-                className={({ isActive }) => `font-medium transition-colors ${
-                  isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Deals
-              </NavLink>
-              <NavLink 
-                to="/fixed-costs" 
-                className={({ isActive }) => `font-medium transition-colors ${
-                  isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Vaste Kosten
-              </NavLink>
-              <NavLink 
-                to="/ai-advisor" 
-                className={({ isActive }) => `font-medium transition-colors ${
-                  isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                AI Advisor
-              </NavLink>
-            </nav>
           </div>
 
           {/* Right side actions */}

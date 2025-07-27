@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { LoginForm } from "@/components/auth/LoginForm";
-import Home from "./Home";
+import { Dashboard } from "@/components/dashboard/Dashboard";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -20,7 +20,7 @@ const Index = () => {
     return <LoginForm />;
   }
 
-  return <Home />;
+  return <Dashboard />;
 };
 
 export default Index;
