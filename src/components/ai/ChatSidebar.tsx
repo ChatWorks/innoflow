@@ -53,7 +53,7 @@ export const ChatSidebar = ({
   const [editTitle, setEditTitle] = useState("");
 
   const handleEditStart = (session: ChatSession) => {
-    setEditingId(session.conversation_id);
+    setEditingId(session.id);
     setEditTitle(session.title);
   };
 
@@ -97,9 +97,9 @@ export const ChatSidebar = ({
             <div className="space-y-1">
               {sessions.slice(0, 12).map((session) => (
                 <Button
-                  key={session.conversation_id}
+                  key={session.id}
                   onClick={() => onSessionSelect(session)}
-                  variant={currentSession?.conversation_id === session.conversation_id ? "secondary" : "ghost"}
+                  variant={currentSession?.id === session.id ? "secondary" : "ghost"}
                   size="icon"
                   className="w-8 h-8"
                   title={session.title}
@@ -151,9 +151,9 @@ export const ChatSidebar = ({
             ) : (
               sessions.map((session) => (
                 <div
-                  key={session.conversation_id}
+                  key={session.id}
                   className={`group p-2 rounded-lg transition-all duration-200 cursor-pointer ${
-                    currentSession?.conversation_id === session.conversation_id
+                    currentSession?.id === session.id
                       ? "bg-primary/10 text-primary"
                       : "hover:bg-accent/50 text-foreground"
                   }`}
@@ -161,7 +161,7 @@ export const ChatSidebar = ({
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
-                      {editingId === session.conversation_id ? (
+                      {editingId === session.id ? (
                         <Input
                           value={editTitle}
                           onChange={(e) => setEditTitle(e.target.value)}
@@ -180,13 +180,11 @@ export const ChatSidebar = ({
                         </h3>
                       )}
                       
-                      <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                        <Calendar className="h-2.5 w-2.5" />
-                        {formatDistanceToNow(new Date(session.last_activity), {
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {formatDistanceToNow(new Date(session.updated_at), {
                           addSuffix: true,
                           locale: nl,
                         })}
-                        <span className="ml-1 text-[10px]">({session.message_count} berichten)</span>
                       </div>
                     </div>
 
@@ -224,7 +222,7 @@ export const ChatSidebar = ({
                           <AlertDialogFooter>
                             <AlertDialogCancel>Annuleren</AlertDialogCancel>
                             <AlertDialogAction
-                              onClick={() => onDeleteSession(session.conversation_id)}
+                              onClick={() => onDeleteSession(session.id)}
                               className="bg-destructive hover:bg-destructive/90"
                             >
                               Verwijderen

@@ -1,295 +1,201 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "./useAuth";
+
+export interface ChatSession {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export interface ChatMessage {
   id: string;
-  role: 'user' | 'assistant' | 'system';
+  role: 'user' | 'assistant';
   content: string;
-  tokens_used?: number;
   created_at: string;
-}
-
-export interface ChatSession {
-  conversation_id: string;
-  title: string;
-  message_count: number;
-  total_tokens: number;
-  last_activity: string;
-  created_at: string;
+  financial_context?: any;
 }
 
 export const useChatSessions = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
-  
-  const [conversationId, setConversationId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [sendingMessage, setSendingMessage] = useState(false);
+  const [currentSession, setCurrentSession] = useState<ChatSession | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  // Fetch all chat sessions for the user
-  const fetchSessions = useCallback(async () => {
+  // Load all sessions for the user
+  const loadSessions = async () => {
     if (!user) return;
-    
+
     try {
       const { data, error } = await supabase
-        .from('ai_conversation_titles')
+        .from('chat_sessions')
         .select('*')
-        .eq('user_id', user.id)
-        .order('last_activity', { ascending: false });
+        .order('updated_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching sessions:', error);
-        return;
-      }
-
-      setSessions(data?.map(session => ({
-        conversation_id: session.conversation_id,
-        title: session.title,
-        message_count: session.message_count,
-        total_tokens: session.total_tokens,
-        last_activity: session.last_activity,
-        created_at: session.created_at
-      })) || []);
+      if (error) throw error;
+      setSessions(data || []);
     } catch (error) {
-      console.error('Error fetching sessions:', error);
+      console.error('Error loading sessions:', error);
     }
-  }, [user]);
+  };
 
-  // Fetch messages for a specific conversation
-  const fetchMessages = useCallback(async (sessionId: string) => {
-    if (!user || !sessionId) return;
-    
+  // Load messages for a specific session
+  const loadMessages = async (sessionId: string) => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('ai_conversations')
-        .select('id, role, content, tokens_used, created_at')
-        .eq('conversation_id', sessionId)
-        .eq('user_id', user.id)
+        .from('chat_messages')
+        .select('*')
+        .eq('session_id', sessionId)
         .order('created_at', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching messages:', error);
-        return;
-      }
-
+      if (error) throw error;
       setMessages((data || []).map(msg => ({
         ...msg,
-        role: msg.role as 'user' | 'assistant' | 'system'
+        role: msg.role as 'user' | 'assistant'
       })));
     } catch (error) {
-      console.error('Error fetching messages:', error);
+      console.error('Error loading messages:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Create a new session
+  const createSession = async (title?: string) => {
+    if (!user) return null;
+
+    try {
+      const { data, error } = await supabase
+        .from('chat_sessions')
+        .insert([
+          {
+            user_id: user.id,
+            title: title || 'Nieuwe Chat'
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const newSession = data as ChatSession;
+      setSessions(prev => [newSession, ...prev]);
+      setCurrentSession(newSession);
+      setMessages([]);
+      
+      return newSession;
+    } catch (error) {
+      console.error('Error creating session:', error);
+      return null;
+    }
+  };
+
+  // Add a message to the current session
+  const addMessage = async (
+    role: 'user' | 'assistant',
+    content: string,
+    financialContext?: any
+  ) => {
+    if (!currentSession) return null;
+
+    try {
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .insert([
+          {
+            session_id: currentSession.id,
+            role,
+            content,
+            financial_context: financialContext
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const newMessage = data as ChatMessage;
+      setMessages(prev => [...prev, newMessage]);
+      
+      return newMessage;
+    } catch (error) {
+      console.error('Error adding message:', error);
+      return null;
+    }
+  };
+
+  // Update session title
+  const updateSessionTitle = async (sessionId: string, title: string) => {
+    try {
+      const { error } = await supabase
+        .from('chat_sessions')
+        .update({ title })
+        .eq('id', sessionId);
+
+      if (error) throw error;
+
+      setSessions(prev => 
+        prev.map(session => 
+          session.id === sessionId 
+            ? { ...session, title }
+            : session
+        )
+      );
+
+      if (currentSession?.id === sessionId) {
+        setCurrentSession(prev => prev ? { ...prev, title } : null);
+      }
+    } catch (error) {
+      console.error('Error updating session title:', error);
+    }
+  };
+
+  // Delete a session
+  const deleteSession = async (sessionId: string) => {
+    try {
+      const { error } = await supabase
+        .from('chat_sessions')
+        .delete()
+        .eq('id', sessionId);
+
+      if (error) throw error;
+
+      setSessions(prev => prev.filter(session => session.id !== sessionId));
+      
+      if (currentSession?.id === sessionId) {
+        setCurrentSession(null);
+        setMessages([]);
+      }
+    } catch (error) {
+      console.error('Error deleting session:', error);
+    }
+  };
+
+  // Switch to a different session
+  const switchToSession = async (session: ChatSession) => {
+    setCurrentSession(session);
+    await loadMessages(session.id);
+  };
+
+  useEffect(() => {
+    if (user) {
+      loadSessions();
     }
   }, [user]);
 
-  // Create a new conversation
-  const createNewConversation = useCallback(() => {
-    const newConversationId = crypto.randomUUID();
-    setConversationId(newConversationId);
-    setMessages([]);
-    return newConversationId;
-  }, []);
-
-  // Select an existing conversation
-  const selectConversation = useCallback((sessionId: string) => {
-    setConversationId(sessionId);
-    fetchMessages(sessionId);
-  }, [fetchMessages]);
-
-  // Send a message with advanced AI integration
-  const sendMessage = useCallback(async (
-    content: string, 
-    timeframe: string = 'month'
-  ): Promise<string | null> => {
-    if (!user || !content.trim()) return null;
-
-    try {
-      setSendingMessage(true);
-      
-      // Use current conversation or create new one
-      const currentConversationId = conversationId || createNewConversation();
-      
-      // Add user message to local state immediately
-      const userMessage: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: 'user',
-        content: content.trim(),
-        created_at: new Date().toISOString()
-      };
-      
-      setMessages(prev => [...prev, userMessage]);
-
-      // Call the enhanced AI advisor function
-      const { data: aiResponse, error } = await supabase.functions.invoke('ai-advisor', {
-        body: {
-          message: content.trim(),
-          conversationId: currentConversationId,
-          timeframe: timeframe
-        }
-      });
-
-      if (error) {
-        console.error('AI Advisor error:', error);
-        toast({
-          title: "AI Fout",
-          description: "Er is een fout opgetreden bij het verwerken van je bericht.",
-          variant: "destructive",
-        });
-        
-        // Remove user message on error
-        setMessages(prev => prev.filter(msg => msg.id !== userMessage.id));
-        return null;
-      }
-
-      // Add AI response to local state
-      const assistantMessage: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: aiResponse.response,
-        tokens_used: aiResponse.tokensUsed,
-        created_at: new Date().toISOString()
-      };
-      
-      setMessages(prev => [...prev, assistantMessage]);
-      
-      // Update conversation ID if it was newly created
-      if (!conversationId) {
-        setConversationId(aiResponse.conversationId);
-      }
-      
-      // Refresh sessions to show updated stats
-      await fetchSessions();
-      
-      toast({
-        title: "AI Advies Ontvangen",
-        description: `Gebruikt ${aiResponse.tokensUsed} tokens voor deze analyse.`,
-      });
-
-      return aiResponse.response;
-      
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast({
-        title: "Fout bij versturen",
-        description: "Er is een fout opgetreden bij het versturen van je bericht.",
-        variant: "destructive",
-      });
-      return null;
-    } finally {
-      setSendingMessage(false);
-    }
-  }, [user, conversationId, createNewConversation, fetchSessions, toast]);
-
-  // Update conversation title
-  const updateConversationTitle = useCallback(async (sessionId: string, newTitle: string) => {
-    if (!user || !newTitle.trim()) return false;
-
-    try {
-      const { error } = await supabase
-        .from('ai_conversation_titles')
-        .update({ title: newTitle.trim() })
-        .eq('conversation_id', sessionId)
-        .eq('user_id', user.id);
-
-      if (error) {
-        console.error('Error updating title:', error);
-        return false;
-      }
-
-      // Update local state
-      setSessions(prev => prev.map(session => 
-        session.conversation_id === sessionId 
-          ? { ...session, title: newTitle.trim() }
-          : session
-      ));
-
-      toast({
-        title: "Titel bijgewerkt",
-        description: "De conversatie titel is succesvol gewijzigd.",
-      });
-
-      return true;
-    } catch (error) {
-      console.error('Error updating title:', error);
-      return false;
-    }
-  }, [user, toast]);
-
-  // Delete a conversation
-  const deleteConversation = useCallback(async (sessionId: string) => {
-    if (!user) return false;
-
-    try {
-      // Delete messages first
-      const { error: messagesError } = await supabase
-        .from('ai_conversations')
-        .delete()
-        .eq('conversation_id', sessionId)
-        .eq('user_id', user.id);
-
-      if (messagesError) {
-        console.error('Error deleting messages:', messagesError);
-        return false;
-      }
-
-      // Delete session title
-      const { error: titleError } = await supabase
-        .from('ai_conversation_titles')
-        .delete()
-        .eq('conversation_id', sessionId)
-        .eq('user_id', user.id);
-
-      if (titleError) {
-        console.error('Error deleting title:', titleError);
-        return false;
-      }
-
-      // Update local state
-      setSessions(prev => prev.filter(session => session.conversation_id !== sessionId));
-      
-      // Clear current conversation if it was deleted
-      if (conversationId === sessionId) {
-        setConversationId(null);
-        setMessages([]);
-      }
-
-      toast({
-        title: "Conversatie verwijderd",
-        description: "De conversatie is succesvol verwijderd.",
-      });
-
-      return true;
-    } catch (error) {
-      console.error('Error deleting conversation:', error);
-      return false;
-    }
-  }, [user, conversationId, toast]);
-
-  // Initialize data on component mount
-  useEffect(() => {
-    if (user) {
-      fetchSessions();
-      setLoading(false);
-    }
-  }, [user, fetchSessions]);
-
   return {
-    conversationId,
-    messages,
     sessions,
+    currentSession,
+    messages,
     loading,
-    sendingMessage,
-    sendMessage,
-    createNewConversation,
-    selectConversation,
-    updateConversationTitle,
-    deleteConversation,
-    refetchSessions: fetchSessions
+    createSession,
+    addMessage,
+    updateSessionTitle,
+    deleteSession,
+    switchToSession,
+    loadSessions
   };
 };
