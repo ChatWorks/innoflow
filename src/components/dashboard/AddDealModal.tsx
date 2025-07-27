@@ -24,8 +24,7 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
     client_name: "",
     amount: "",
     status: "potential",
-    expected_date: "",
-    payment_due_date: "",
+    payment_received_date: "",
     description: "",
     deal_type: "one_time",
     monthly_amount: "",
@@ -54,8 +53,7 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
         client_name: formData.client_name,
         amount: parseFloat(formData.amount),
         status: formData.status,
-        expected_date: formData.expected_date || null,
-        payment_due_date: formData.payment_due_date || null,
+        payment_received_date: formData.payment_received_date || null,
         description: formData.description || null,
         probability: formData.status === "potential" ? 50 : formData.status === "confirmed" ? 80 : 100,
         deal_type: formData.deal_type,
@@ -64,11 +62,6 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
         start_date: formData.deal_type === "recurring" ? formData.start_date : null,
         user_id: user.id
       };
-
-      // Add payment_received_date if status is paid
-      if (formData.status === "paid") {
-        dealData.payment_received_date = new Date().toISOString().split('T')[0];
-      }
 
       const { data: dealResult, error } = await supabase
         .from("deals")
@@ -100,8 +93,7 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
         client_name: "",
         amount: "",
         status: "potential",
-        expected_date: "",
-        payment_due_date: "",
+        payment_received_date: "",
         description: "",
         deal_type: "one_time",
         monthly_amount: "",
@@ -319,30 +311,20 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
             </div>
           )}
 
-          {/* Additional Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Payment Information */}
+          <div className="space-y-4 p-4 bg-green-50 rounded-lg border border-green-200">
+            <h4 className="font-medium text-green-900">Betaal Informatie</h4>
+            
             <div className="space-y-2">
-              <Label htmlFor="expected_date">Verwachte Datum</Label>
+              <Label htmlFor="payment_received_date">Betaal Datum</Label>
               <Input
-                id="expected_date"
+                id="payment_received_date"
                 type="date"
-                value={formData.expected_date}
-                onChange={(e) => setFormData(prev => ({ ...prev, expected_date: e.target.value }))}
+                value={formData.payment_received_date}
+                onChange={(e) => setFormData(prev => ({ ...prev, payment_received_date: e.target.value }))}
                 className="h-10"
               />
-              <p className="text-xs text-muted-foreground">Algemene verwachte datum voor de deal</p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="payment_due_date">Verwachte Betaaldatum</Label>
-              <Input
-                id="payment_due_date"
-                type="date"
-                value={formData.payment_due_date}
-                onChange={(e) => setFormData(prev => ({ ...prev, payment_due_date: e.target.value }))}
-                className="h-10"
-              />
-              <p className="text-xs text-muted-foreground">Datum waarop betaling verwacht wordt</p>
+              <p className="text-xs text-green-600">Datum waarop de betaling is ontvangen (alleen invullen als deal betaald is)</p>
             </div>
           </div>
 

@@ -16,7 +16,7 @@ interface Deal {
   client_name: string;
   amount: number;
   status: string;
-  expected_date?: string;
+  payment_received_date?: string;
   description?: string;
   deal_type?: string;
   monthly_amount?: number;
@@ -39,7 +39,7 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
     client_name: "",
     amount: "",
     status: "potential",
-    expected_date: "",
+    payment_received_date: "",
     description: "",
     deal_type: "one_time",
     monthly_amount: "",
@@ -55,7 +55,7 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
         client_name: deal.client_name,
         amount: deal.amount.toString(),
         status: deal.status,
-        expected_date: deal.expected_date || "",
+        payment_received_date: deal.payment_received_date || "",
         description: deal.description || "",
         deal_type: deal.deal_type || "one_time",
         monthly_amount: deal.monthly_amount?.toString() || "",
@@ -77,7 +77,7 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
         client_name: formData.client_name,
         amount: parseFloat(formData.amount),
         status: formData.status,
-        expected_date: formData.expected_date || null,
+        payment_received_date: formData.payment_received_date || null,
         description: formData.description || null,
         probability: formData.status === "potential" ? 50 : formData.status === "confirmed" ? 80 : 100,
         deal_type: formData.deal_type,
@@ -296,14 +296,20 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="expected_date">Verwachte Datum</Label>
-            <Input
-              id="expected_date"
-              type="date"
-              value={formData.expected_date}
-              onChange={(e) => setFormData(prev => ({ ...prev, expected_date: e.target.value }))}
-            />
+          <div className="space-y-4 p-4 bg-green-50 rounded-lg border border-green-200">
+            <h4 className="font-medium text-green-900">Betaal Informatie</h4>
+            
+            <div className="space-y-2">
+              <Label htmlFor="payment_received_date">Betaal Datum</Label>
+              <Input
+                id="payment_received_date"
+                type="date"
+                value={formData.payment_received_date}
+                onChange={(e) => setFormData(prev => ({ ...prev, payment_received_date: e.target.value }))}
+                className="h-10"
+              />
+              <p className="text-xs text-green-600">Datum waarop de betaling is ontvangen</p>
+            </div>
           </div>
 
           <div className="space-y-2">
