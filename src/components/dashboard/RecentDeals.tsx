@@ -1,31 +1,35 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Edit, MoreHorizontal } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Eye, Edit, MoreHorizontal, ArrowRight } from "lucide-react";
+import { AddDealModal } from "./AddDealModal";
 
 interface Deal {
   id: string;
   title: string;
   client_name: string;
   amount: number;
-  status: "potential" | "confirmed" | "invoiced" | "paid";
-  expected_date: string | null;
-  probability: number;
+  status: string;
+  expected_date?: string;
+  probability?: number;
+  invoice_date?: string;
+  payment_due_date?: string;
+  payment_received_date?: string;
 }
 
 interface RecentDealsProps {
   deals: Deal[];
-  onViewDeal?: (dealId: string) => void;
-  onEditDeal?: (dealId: string) => void;
+  onViewDeal?: (deal: Deal) => void;
+  onEditDeal?: (deal: Deal) => void;
+  onDealsUpdate?: () => void;
 }
 
-export const RecentDeals = ({ deals, onViewDeal, onEditDeal }: RecentDealsProps) => {
+export const RecentDeals = ({ deals, onViewDeal, onEditDeal, onDealsUpdate }: RecentDealsProps) => {
+  const { toast } = useToast();
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('nl-NL', {
       style: 'currency',
@@ -35,21 +39,22 @@ export const RecentDeals = ({ deals, onViewDeal, onEditDeal }: RecentDealsProps)
     }).format(amount);
   };
 
-  const getStatusVariant = (status: Deal["status"]) => {
+  const getStatusVariant = (status: string) => {
     switch (status) {
-      case "paid":
-        return "default";
-      case "confirmed":
-      case "invoiced":
-        return "secondary";
       case "potential":
+        return "secondary";
+      case "confirmed":  
+        return "default";
+      case "invoiced":
         return "outline";
+      case "paid":
+        return "destructive";
       default:
-        return "outline";
+        return "secondary";
     }
   };
 
-  const getStatusLabel = (status: Deal["status"]) => {
+  const getStatusLabel = (status: string) => {
     switch (status) {
       case "potential":
         return "Potentieel";
@@ -64,85 +69,158 @@ export const RecentDeals = ({ deals, onViewDeal, onEditDeal }: RecentDealsProps)
     }
   };
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "Geen datum";
-    return new Intl.DateTimeFormat('nl-NL', {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "potential":
+        return "bg-gray-100 text-gray-800 hover:bg-gray-200";
+      case "confirmed":
+        return "bg-blue-100 text-blue-800 hover:bg-blue-200";
+      case "invoiced":
+        return "bg-orange-100 text-orange-800 hover:bg-orange-200";
+      case "paid":
+        return "bg-green-100 text-green-800 hover:bg-green-200";
+      default:
+        return "bg-gray-100 text-gray-800 hover:bg-gray-200";
+    }
+  };
+
+  const getNextStatus = (currentStatus: string) => {
+    switch (currentStatus) {
+      case "potential":
+        return "confirmed";
+      case "confirmed":
+        return "invoiced";
+      case "invoiced":
+        return "paid";
+      default:
+        return null;
+    }
+  };
+
+  const updateDealStatus = async (dealId: string, newStatus: string) => {
+    try {
+      const updateData: any = { status: newStatus };
+      
+      // Set relevant dates based on status
+      const now = new Date().toISOString().split('T')[0];
+      if (newStatus === "invoiced") {
+        updateData.invoice_date = now;
+        // Set payment due date to 30 days from invoice
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 30);
+        updateData.payment_due_date = dueDate.toISOString().split('T')[0];
+      } else if (newStatus === "paid") {
+        updateData.payment_received_date = now;
+      }
+
+      const { error } = await supabase
+        .from("deals")
+        .update(updateData)
+        .eq("id", dealId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Status bijgewerkt",
+        description: `Deal status is gewijzigd naar ${getStatusLabel(newStatus)}.`,
+      });
+
+      onDealsUpdate?.();
+    } catch (error) {
+      console.error("Error updating deal status:", error);
+      toast({
+        title: "Fout",
+        description: "Kon deal status niet bijwerken.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('nl-NL', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
-    }).format(new Date(dateString));
+    });
   };
 
   return (
-    <Card className="col-span-1 md:col-span-2">
+    <Card className="lg:col-span-2">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Recente Deals</CardTitle>
-        <Button variant="outline" size="sm">
-          Alle Deals
-        </Button>
+        <AddDealModal onSuccess={onDealsUpdate} />
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {deals.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>Nog geen deals toegevoegd</p>
-              <Button variant="outline" size="sm" className="mt-2">
-                Deal Toevoegen
-              </Button>
-            </div>
-          ) : (
-            deals.map((deal) => (
-              <div
-                key={deal.id}
-                className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium text-foreground truncate">
-                      {deal.title}
-                    </h4>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant={getStatusVariant(deal.status)} className="text-xs">
-                        {getStatusLabel(deal.status)}
-                      </Badge>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => onViewDeal?.(deal.id)}>
-                            <Eye className="w-4 h-4 mr-2" />
-                            Bekijken
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onEditDeal?.(deal.id)}>
-                            <Edit className="w-4 h-4 mr-2" />
-                            Bewerken
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+        {deals.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <p>Nog geen deals toegevoegd.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {deals.map((deal) => (
+              <div key={deal.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium">{deal.title}</h4>
+                      <p className="text-sm text-muted-foreground">{deal.client_name}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold">{formatCurrency(deal.amount)}</p>
+                      {deal.expected_date && (
+                        <p className="text-sm text-muted-foreground">
+                          Verwacht: {formatDate(deal.expected_date)}
+                        </p>
+                      )}
+                      {deal.payment_due_date && deal.status === "invoiced" && (
+                        <p className="text-sm text-orange-600">
+                          Vervaldatum: {formatDate(deal.payment_due_date)}
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>{deal.client_name}</span>
-                    <div className="flex items-center space-x-4">
-                      <span className="font-medium text-foreground">
-                        {formatCurrency(deal.amount)}
+                  <div className="flex items-center justify-between mt-3">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${getStatusColor(deal.status)}`}
+                      >
+                        {getStatusLabel(deal.status)}
                       </span>
-                      {deal.status === "potential" && (
-                        <span className="text-xs">
-                          {deal.probability}% kans
-                        </span>
+                      {getNextStatus(deal.status) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => updateDealStatus(deal.id, getNextStatus(deal.status)!)}
+                          className="h-6 px-2 text-xs"
+                        >
+                          <ArrowRight className="h-3 w-3 mr-1" />
+                          {getStatusLabel(getNextStatus(deal.status)!)}
+                        </Button>
                       )}
-                      <span>{formatDate(deal.expected_date)}</span>
                     </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => onViewDeal?.(deal)}>
+                          <Eye className="h-4 w-4 mr-2" />
+                          Bekijken
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onEditDeal?.(deal)}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Bewerken
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
