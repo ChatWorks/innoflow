@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { AddFixedCostModal } from "@/components/dashboard/AddFixedCostModal";
-import { FloatingActionButton } from "@/components/dashboard/FloatingActionButton";
 import { FixedCostStatistics } from "@/components/fixed-costs/FixedCostStatistics";
 import { FixedCostCard } from "@/components/fixed-costs/FixedCostCard";
 import { FixedCostFilters } from "@/components/fixed-costs/FixedCostFilters";
@@ -9,7 +8,6 @@ import { EmptyFixedCostsState } from "@/components/fixed-costs/EmptyFixedCostsSt
 import { FixedCostsLoadingSkeleton } from "@/components/fixed-costs/FixedCostsLoadingSkeleton";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useAuth } from "@/hooks/useAuth";
-import { Plus } from "lucide-react";
 
 interface FixedCost {
   id: string;
@@ -117,13 +115,13 @@ export const FixedCostsPage = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Hero Section */}
         <div className="mb-8 animate-fade-in">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-600 via-red-600/90 to-red-600/80 p-8 text-white">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-primary/80 p-8 text-white">
             <div className="absolute inset-0 bg-primary/10" />
             <div className="relative z-10">
               <h1 className="text-4xl font-bold font-manrope mb-2">
                 Vaste Kosten
               </h1>
-              <p className="text-red-50/90 text-lg">
+              <p className="text-primary-foreground/90 text-lg">
                 Beheer je terugkerende uitgaven en abonnementen
               </p>
             </div>
@@ -186,12 +184,6 @@ export const FixedCostsPage = () => {
         ) : (
           <EmptyFixedCostsState onFixedCostsUpdate={handleFixedCostsUpdate} />
         )}
-
-        {/* Floating Action Button */}
-        <FloatingActionButton 
-          onRefresh={handleFixedCostsUpdate}
-          onQuickDeal={handleFixedCostsUpdate}
-        />
       </main>
     </div>
   );

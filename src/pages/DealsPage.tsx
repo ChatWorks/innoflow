@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { AddDealModal } from "@/components/dashboard/AddDealModal";
-import { FloatingActionButton } from "@/components/dashboard/FloatingActionButton";
 import { DealStatistics } from "@/components/deals/DealStatistics";
 import { DealCard } from "@/components/deals/DealCard";
 import { DealFilters } from "@/components/deals/DealFilters";
@@ -9,7 +8,6 @@ import { EmptyDealsState } from "@/components/deals/EmptyDealsState";
 import { DealsLoadingSkeleton } from "@/components/deals/DealsLoadingSkeleton";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useAuth } from "@/hooks/useAuth";
-import { Plus } from "lucide-react";
 
 interface Deal {
   id: string;
@@ -179,12 +177,6 @@ export const DealsPage = () => {
         ) : (
           <EmptyDealsState onDealsUpdate={handleDealsUpdate} />
         )}
-
-        {/* Floating Action Button */}
-        <FloatingActionButton 
-          onRefresh={handleDealsUpdate}
-          onQuickDeal={handleDealsUpdate}
-        />
       </main>
     </div>
   );

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { DashboardHeader } from "./DashboardHeader";
 import { MetricCard } from "./MetricCard";
 import { TimeFilter, TimePeriod } from "./TimeFilter";
-import { FloatingActionButton } from "./FloatingActionButton";
 import { DashboardLoadingSkeleton } from "./DashboardLoadingSkeleton";
 import { EmptyDashboardState } from "./EmptyDashboardState";
 import { useDashboardData } from "@/hooks/useDashboardData";
@@ -177,12 +176,6 @@ export const EnhancedDashboard = () => {
             onFixedCostsUpdate={handleFixedCostsUpdate}
           />
         )}
-
-        {/* Floating Action Button */}
-        <FloatingActionButton 
-          onRefresh={refetch}
-          onQuickDeal={handleDealsUpdate}
-        />
       </main>
     </div>
   );
