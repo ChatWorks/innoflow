@@ -174,32 +174,23 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
                 </div>
 
                 {/* Suggested Questions */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-4xl mx-auto">
                   {suggestedQuestions.map((question, index) => (
-                    <div
+                    <Button
                       key={index}
-                      className="animate-fade-in"
-                      style={{ animationDelay: `${index * 150}ms` }}
+                      variant="outline"
+                      className="p-4 h-auto text-left justify-start transition-all duration-200 hover:scale-[1.02] hover:shadow-md hover:border-primary/40 bg-card/50 backdrop-blur-sm border-border/60"
+                      onClick={() => setInput(question)}
                     >
-                      <Card className="hover-scale transition-all duration-200 hover:shadow-lg border-2 border-dashed border-primary/20 hover:border-primary/40 bg-gradient-to-r from-primary/5 to-primary/10 group cursor-pointer">
-                        <CardContent className="p-4">
-                          <Button
-                            variant="ghost"
-                            className="w-full h-auto p-0 text-left justify-start"
-                            onClick={() => setInput(question)}
-                          >
-                            <div className="flex items-start space-x-3">
-                              <div className="w-8 h-8 rounded-full bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center flex-shrink-0 mt-1 transition-colors">
-                                <MessageSquare className="h-4 w-4 text-primary" />
-                              </div>
-                              <div className="text-sm text-foreground group-hover:text-primary transition-colors leading-relaxed">
-                                {question}
-                              </div>
-                            </div>
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    </div>
+                      <div className="flex items-center space-x-3 w-full">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <MessageSquare className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="text-sm text-foreground leading-relaxed text-left flex-1">
+                          {question}
+                        </div>
+                      </div>
+                    </Button>
                   ))}
                 </div>
 
