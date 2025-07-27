@@ -71,7 +71,7 @@ export const ChatSidebar = ({
 
   if (isCollapsed) {
     return (
-      <div className="w-16 bg-card border-r border-border transition-all duration-300 ease-in-out">
+      <div className="w-16 bg-card border-r border-border transition-all duration-300 ease-in-out flex-shrink-0">
         <div className="p-4 space-y-4">
           <Button
             onClick={onToggleCollapse}
@@ -115,7 +115,7 @@ export const ChatSidebar = ({
   }
 
   return (
-    <Card className="w-80 bg-card border-r border-border transition-all duration-300 ease-in-out rounded-none">
+    <Card className="w-80 bg-card border-r border-border transition-all duration-300 ease-in-out rounded-none flex-shrink-0">
       <div className="p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold font-manrope text-foreground">

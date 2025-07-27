@@ -30,27 +30,29 @@ export const AIAdvisorPage = () => {
     <div className="min-h-screen bg-background">
       <DashboardHeader onLogout={signOut} userName={user?.email?.split("@")[0]} />
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold font-manrope text-foreground mb-2">
-            AI Financieel Adviseur
-          </h2>
-          <p className="text-muted-foreground">
-            Krijg persoonlijk financieel advies op basis van je data
-          </p>
-        </div>
+      <main className="w-full px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold font-manrope text-foreground mb-2">
+              AI Financieel Adviseur
+            </h2>
+            <p className="text-muted-foreground">
+              Krijg persoonlijk financieel advies op basis van je data
+            </p>
+          </div>
 
-        <div className="space-y-6">
-          <ModernChatInterface
-            context={{
-              monthlyIncome: metrics.monthlyIncome,
-              monthlyExpenses: metrics.monthlyExpenses,
-              netCashflow: metrics.netCashflow,
-              pipelineValue: metrics.pendingValue,
-              activeDeals: data.deals.filter(deal => deal.status !== 'paid').length,
-              fixedCosts: data.fixedCosts.length
-            }}
-          />
+          <div className="w-full">
+            <ModernChatInterface
+              context={{
+                monthlyIncome: metrics.monthlyIncome,
+                monthlyExpenses: metrics.monthlyExpenses,
+                netCashflow: metrics.netCashflow,
+                pipelineValue: metrics.pendingValue,
+                activeDeals: data.deals.filter(deal => deal.status !== 'paid').length,
+                fixedCosts: data.fixedCosts.length
+              }}
+            />
+          </div>
         </div>
       </main>
     </div>

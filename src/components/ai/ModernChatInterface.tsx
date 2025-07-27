@@ -116,10 +116,10 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
 
   const formatMessage = (content: string) => {
     return content.split('\n').map((line, index) => (
-      <React.Fragment key={index}>
+      <span key={index}>
         {line}
         {index < content.split('\n').length - 1 && <br />}
-      </React.Fragment>
+      </span>
     ));
   };
 
@@ -131,21 +131,22 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
   ];
 
   return (
-    <div className="flex h-[calc(100vh-200px)] bg-background rounded-lg overflow-hidden shadow-xl border border-border">
-      {/* Sidebar */}
-      <ChatSidebar
-        sessions={sessions}
-        currentSession={currentSession}
-        onSessionSelect={switchToSession}
-        onNewChat={handleNewChat}
-        onDeleteSession={deleteSession}
-        onUpdateTitle={updateSessionTitle}
-        isCollapsed={sidebarCollapsed}
-        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-      />
+    <div className="w-full">
+      <div className="flex h-[calc(100vh-200px)] bg-background rounded-lg overflow-hidden shadow-xl border border-border max-w-full mx-auto">
+        {/* Sidebar */}
+        <ChatSidebar
+          sessions={sessions}
+          currentSession={currentSession}
+          onSessionSelect={switchToSession}
+          onNewChat={handleNewChat}
+          onDeleteSession={deleteSession}
+          onUpdateTitle={updateSessionTitle}
+          isCollapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        />
 
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
+        {/* Main Chat Area */}
+        <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <div className="p-6 border-b border-border bg-gradient-to-r from-primary/5 to-accent/5">
           <div className="flex items-center space-x-3">
@@ -256,27 +257,26 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
         </ScrollArea>
 
         {/* Input Area */}
-        <div className="p-6 border-t border-border bg-background">
-          <div className="flex space-x-4">
-            <div className="flex-1 relative">
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyPress}
-                placeholder="Stel je financiële vraag..."
-                className="min-h-[60px] resize-none pr-12 border-border focus:border-primary transition-colors"
-                disabled={isLoading}
-              />
-              <Button
-                onClick={sendMessage}
-                disabled={!input.trim() || isLoading}
-                size="icon"
-                className="absolute right-2 bottom-2 h-8 w-8 bg-primary hover:bg-primary/90"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
+        <div className="p-6 border-t border-border bg-background flex-shrink-0">
+          <div className="relative max-w-4xl mx-auto">
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyPress}
+              placeholder="Stel je financiële vraag..."
+              className="min-h-[60px] resize-none pr-12 border-border focus:border-primary transition-colors w-full"
+              disabled={isLoading}
+            />
+            <Button
+              onClick={sendMessage}
+              disabled={!input.trim() || isLoading}
+              size="icon"
+              className="absolute right-2 bottom-2 h-8 w-8 bg-primary hover:bg-primary/90"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
           </div>
+        </div>
         </div>
       </div>
     </div>
