@@ -59,7 +59,7 @@ export const DashboardHeader = ({
                 }`}
               >
                 <Target className="w-4 h-4" />
-                Goals
+                Doelen
                 {/* Badge for at-risk goals - would be populated from goals hook */}
               </button>
               <button 
