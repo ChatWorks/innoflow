@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { MoreHorizontal, Edit, Trash2, Euro } from "lucide-react";
 import { AddFixedCostModal } from "./AddFixedCostModal";
+import { EditFixedCostModal } from "./EditFixedCostModal";
 
 interface FixedCost {
   id: string;
@@ -15,6 +16,8 @@ interface FixedCost {
   amount: number;
   frequency: string;
   start_date: string;
+  end_date?: string | null;
+  description?: string;
   is_active: boolean;
 }
 
@@ -160,9 +163,8 @@ export const FixedCostsList = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
-                      <Edit className="h-4 w-4 mr-2" />
-                      Bewerken
+                    <DropdownMenuItem asChild>
+                      <EditFixedCostModal fixedCost={cost} onSuccess={fetchFixedCosts} />
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       className="text-destructive"
