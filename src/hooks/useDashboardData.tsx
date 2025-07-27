@@ -148,21 +148,21 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
 
       // Filter deals based on relevant dates within the selected period
       const filteredDeals = (deals || []).filter(deal => {
-        // Use the most relevant date for each deal based on its status and available dates
+        // For projection purposes, use expected/due dates rather than actual payment dates
         let relevantDate: Date | null = null;
         
-        if (deal.status === 'paid' && deal.payment_received_date) {
-          // For paid deals, use actual payment date
-          relevantDate = new Date(deal.payment_received_date);
-        } else if (deal.payment_due_date) {
-          // For unpaid deals, use payment due date if available
+        if (deal.payment_due_date) {
+          // Prioritize payment due date for projection
           relevantDate = new Date(deal.payment_due_date);
-        } else if (deal.status === 'invoiced' && deal.invoice_date) {
-          // For invoiced deals without payment due date, use invoice date
-          relevantDate = new Date(deal.invoice_date);
         } else if (deal.expected_date) {
-          // Fallback to expected date
+          // Use expected date as backup
           relevantDate = new Date(deal.expected_date);
+        } else if (deal.status === 'invoiced' && deal.invoice_date) {
+          // For invoiced deals without due date, use invoice date
+          relevantDate = new Date(deal.invoice_date);
+        } else if (deal.status === 'paid' && deal.payment_received_date) {
+          // Only for already paid deals without other dates, use payment date
+          relevantDate = new Date(deal.payment_received_date);
         } else {
           // Final fallback to creation date
           relevantDate = new Date(deal.created_at);
@@ -171,36 +171,40 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
         return relevantDate && relevantDate >= start && relevantDate <= end;
       });
 
-      // Add paid deals as income entries for the current period
-      const paidDealsInPeriod = filteredDeals.filter(deal => {
-        if (deal.status === "paid" && deal.payment_received_date) {
-          const paymentDate = new Date(deal.payment_received_date);
-          return paymentDate >= start && paymentDate <= end;
-        }
-        return false;
+      // Add deals as income entries for the current period based on expected dates
+      const dealsForIncome = filteredDeals.filter(deal => {
+        // Include all deals in the filtered period regardless of payment status
+        // The filtering logic above already ensures they belong to this period
+        return deal.status === "paid" || deal.status === "confirmed" || deal.status === "potential";
       });
 
-      // Create virtual cashflow entries for paid deals that don't have entries yet
-      const paidDealEntries = paidDealsInPeriod.map(deal => ({
-        id: `deal-${deal.id}`,
-        type: "income",
-        description: `Deal betaling: ${deal.title}`,
-        category: "deals",
-        amount: deal.amount,
-        transaction_date: deal.payment_received_date,
-        deal_id: deal.id,
-        is_projected: false,
-        created_at: deal.payment_received_date,
-        updated_at: deal.payment_received_date,
-        fixed_cost_id: null
-      }));
+      // Create virtual cashflow entries for deals that don't have entries yet
+      const dealEntries = dealsForIncome.map(deal => {
+        // Use the same date logic as filtering for consistency
+        let transactionDate = deal.payment_due_date || deal.expected_date || deal.payment_received_date || deal.created_at;
+        
+        return {
+          id: `deal-${deal.id}`,
+          type: "income",
+          description: `Deal inkomsten: ${deal.title}`,
+          category: "deals",
+          amount: deal.amount,
+          transaction_date: transactionDate,
+          deal_id: deal.id,
+          is_projected: deal.status !== "paid",
+          created_at: deal.created_at,
+          updated_at: deal.updated_at,
+          fixed_cost_id: null,
+          user_id: deal.user_id
+        };
+      });
 
       // Combine actual cashflow entries with paid deal entries (avoid duplicates)
       const existingDealIds = (cashflowEntries || [])
         .filter(entry => entry.deal_id)
         .map(entry => entry.deal_id);
       
-      const newDealEntries = paidDealEntries.filter(entry => 
+      const newDealEntries = dealEntries.filter(entry => 
         !existingDealIds.includes(entry.deal_id)
       );
 
