@@ -106,13 +106,11 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
       setLoading(true);
       const { start, end } = getDateRange(currentDate, period);
 
-      // Fetch deals within the selected date range (based on created_at date)
+      // Fetch all deals first, then filter in memory based on relevant dates
       const { data: deals, error: dealsError } = await supabase
         .from("deals")
         .select("*")
         .eq("user_id", user.id)
-        .gte("created_at", start.toISOString())
-        .lte("created_at", end.toISOString())
         .order("created_at", { ascending: false });
 
       if (dealsError) {
@@ -148,8 +146,27 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
         console.error("Error fetching cashflow entries:", entriesError);
       }
 
+      // Filter deals based on relevant dates within the selected period
+      const filteredDeals = (deals || []).filter(deal => {
+        // Use the most relevant date for each deal based on its status
+        let relevantDate: Date | null = null;
+        
+        if (deal.status === 'paid' && deal.payment_received_date) {
+          relevantDate = new Date(deal.payment_received_date);
+        } else if (deal.status === 'invoiced' && deal.invoice_date) {
+          relevantDate = new Date(deal.invoice_date);
+        } else if (deal.expected_date) {
+          relevantDate = new Date(deal.expected_date);
+        } else {
+          // Fallback to creation date if no other relevant date is available
+          relevantDate = new Date(deal.created_at);
+        }
+        
+        return relevantDate && relevantDate >= start && relevantDate <= end;
+      });
+
       // Add paid deals as income entries for the current period
-      const paidDealsInPeriod = (deals || []).filter(deal => {
+      const paidDealsInPeriod = filteredDeals.filter(deal => {
         if (deal.status === "paid" && deal.payment_received_date) {
           const paymentDate = new Date(deal.payment_received_date);
           return paymentDate >= start && paymentDate <= end;
@@ -184,7 +201,7 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
       const allCashflowEntries = [...(cashflowEntries || []), ...newDealEntries];
 
       setData({
-        deals: deals || [],
+        deals: filteredDeals,
         fixedCosts: fixedCosts || [],
         cashflowEntries: allCashflowEntries || []
       });
