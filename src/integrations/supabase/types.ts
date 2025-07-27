@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      budgets: {
+        Row: {
+          alert_threshold: number | null
+          category: string
+          created_at: string
+          current_spent: number | null
+          id: string
+          is_active: boolean | null
+          month_year: string
+          monthly_limit: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          alert_threshold?: number | null
+          category: string
+          created_at?: string
+          current_spent?: number | null
+          id?: string
+          is_active?: boolean | null
+          month_year: string
+          monthly_limit: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          alert_threshold?: number | null
+          category?: string
+          created_at?: string
+          current_spent?: number | null
+          id?: string
+          is_active?: boolean | null
+          month_year?: string
+          monthly_limit?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       cashflow_entries: {
         Row: {
           amount: number
@@ -130,6 +169,100 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      expense_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          is_default: boolean | null
+          name: string
+          parent_category_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          name: string
+          parent_category_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          parent_category_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_categories_parent_category_id_fkey"
+            columns: ["parent_category_id"]
+            isOneToOne: false
+            referencedRelation: "expense_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          amount: number
+          budget_category: string | null
+          category: string
+          created_at: string
+          description: string
+          expense_date: string
+          id: string
+          is_recurring: boolean | null
+          linked_deal_id: string | null
+          receipt_url: string | null
+          subcategory: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          budget_category?: string | null
+          category: string
+          created_at?: string
+          description: string
+          expense_date?: string
+          id?: string
+          is_recurring?: boolean | null
+          linked_deal_id?: string | null
+          receipt_url?: string | null
+          subcategory?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          budget_category?: string | null
+          category?: string
+          created_at?: string
+          description?: string
+          expense_date?: string
+          id?: string
+          is_recurring?: boolean | null
+          linked_deal_id?: string | null
+          receipt_url?: string | null
+          subcategory?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_linked_deal_id_fkey"
+            columns: ["linked_deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fixed_costs: {
         Row: {
