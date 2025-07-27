@@ -1,12 +1,33 @@
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { SimplifiedCashflowWidget } from "@/components/dashboard/SimplifiedCashflowWidget";
 import { QuickInsightsWidget } from "@/components/dashboard/QuickInsightsWidget";
+import { TimeRangeSelector, TimePeriodType } from "@/components/dashboard/TimeRangeSelector";
 import { useAuth } from "@/hooks/useAuth";
+import { useDashboardData } from "@/hooks/useDashboardData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Euro, Calendar, Activity } from "lucide-react";
+import { useState } from "react";
 
 export const Home = () => {
   const { user, signOut } = useAuth();
+  const [period, setPeriod] = useState<TimePeriodType>("month");
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  
+  const { data, loading, metrics } = useDashboardData(period, currentDate);
+  
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('nl-NL', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+  
+  const calculateChange = (current: number, previous: number): number => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return ((current - previous) / previous) * 100;
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -18,18 +39,29 @@ export const Home = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-              <Activity className="h-6 w-6 text-primary-foreground" />
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
+                <Activity className="h-6 w-6 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">
+                  Welkom terug, {user?.email?.split('@')[0] || 'Team Member'}
+                </h1>
+                <p className="text-muted-foreground">
+                  Hier is je cashflow overzicht en belangrijkste inzichten
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">
-                Welkom terug, {user?.email?.split('@')[0] || 'Team Member'}
-              </h1>
-              <p className="text-muted-foreground">
-                Hier is je cashflow overzicht en belangrijkste inzichten
-              </p>
-            </div>
+            
+            {/* Time Range Selector */}
+            <TimeRangeSelector
+              period={period}
+              onPeriodChange={setPeriod}
+              selectedDate={currentDate}
+              onDateChange={setCurrentDate}
+              className="min-w-[300px]"
+            />
           </div>
         </div>
 
@@ -41,41 +73,53 @@ export const Home = () => {
               <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-900 dark:text-green-100">Positief</div>
-              <p className="text-xs text-green-700 dark:text-green-300">Trending upward</p>
+              <div className="text-2xl font-bold text-green-900 dark:text-green-100">
+                {loading ? "..." : metrics?.netCashflow >= 0 ? "Positief" : "Negatief"}
+              </div>
+              <p className="text-xs text-green-700 dark:text-green-300">
+                {loading ? "..." : `${formatCurrency(metrics?.netCashflow || 0)} netto`}
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Deze Maand</CardTitle>
+              <CardTitle className="text-sm font-medium">Inkomsten</CardTitle>
               <Euro className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">€ --</div>
-              <p className="text-xs text-muted-foreground">Netto resultaat</p>
+              <div className="text-2xl font-bold">
+                {loading ? "..." : formatCurrency(metrics?.monthlyIncome || 0)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {period === 'day' ? 'Vandaag' : period === 'month' ? 'Deze maand' : period === 'quarter' ? 'Dit kwartaal' : 'Dit jaar'}
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Dit Kwartaal</CardTitle>
+              <CardTitle className="text-sm font-medium">Uitgaven</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">€ --</div>
-              <p className="text-xs text-muted-foreground">Projectie</p>
+              <div className="text-2xl font-bold">
+                {loading ? "..." : formatCurrency(metrics?.monthlyExpenses || 0)}
+              </div>
+              <p className="text-xs text-muted-foreground">Vaste kosten</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Trend</CardTitle>
+              <CardTitle className="text-sm font-medium">Pipeline</CardTitle>
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+12%</div>
-              <p className="text-xs text-muted-foreground">vs. vorige maand</p>
+              <div className="text-2xl font-bold">
+                {loading ? "..." : formatCurrency(metrics?.pendingValue || 0)}
+              </div>
+              <p className="text-xs text-muted-foreground">Potential deals</p>
             </CardContent>
           </Card>
         </div>
@@ -90,12 +134,12 @@ export const Home = () => {
           {/* Quick Insights - Takes 1 column */}
           <div className="lg:col-span-1">
             <QuickInsightsWidget 
-              monthlyIncome={0}
-              monthlyExpenses={0}
-              netCashflow={0}
-              pipelineValue={0}
-              deals={[]}
-              fixedCosts={[]}
+              monthlyIncome={metrics?.monthlyIncome || 0}
+              monthlyExpenses={metrics?.monthlyExpenses || 0}
+              netCashflow={metrics?.netCashflow || 0}
+              pipelineValue={metrics?.pendingValue || 0}
+              deals={data?.deals || []}
+              fixedCosts={data?.fixedCosts || []}
             />
           </div>
         </div>
