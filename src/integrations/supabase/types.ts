@@ -66,7 +66,7 @@ export type Database = {
           transaction_date: string
           type: string
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           amount: number
@@ -80,7 +80,7 @@ export type Database = {
           transaction_date: string
           type: string
           updated_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           amount?: number
@@ -94,7 +94,7 @@ export type Database = {
           transaction_date?: string
           type?: string
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -132,7 +132,7 @@ export type Database = {
           status: string
           title: string
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           amount: number
@@ -152,7 +152,7 @@ export type Database = {
           status?: string
           title: string
           updated_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           amount?: number
@@ -172,7 +172,7 @@ export type Database = {
           status?: string
           title?: string
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -283,7 +283,7 @@ export type Database = {
           name: string
           start_date: string
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           amount: number
@@ -297,7 +297,7 @@ export type Database = {
           name: string
           start_date: string
           updated_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           amount?: number
@@ -311,7 +311,7 @@ export type Database = {
           name?: string
           start_date?: string
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -355,7 +355,7 @@ export type Database = {
           monthly_amount: number
           start_date: string
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           created_at?: string
@@ -366,7 +366,7 @@ export type Database = {
           monthly_amount: number
           start_date: string
           updated_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           created_at?: string
@@ -377,7 +377,7 @@ export type Database = {
           monthly_amount?: number
           start_date?: string
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
