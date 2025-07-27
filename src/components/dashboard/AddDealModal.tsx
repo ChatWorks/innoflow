@@ -31,19 +31,33 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
     setLoading(true);
 
     try {
-      const { error } = await supabase
+      const dealData: any = {
+        title: formData.title,
+        client_name: formData.client_name,
+        amount: parseFloat(formData.amount),
+        status: formData.status,
+        expected_date: formData.expected_date || null,
+        description: formData.description || null,
+        probability: formData.status === "potential" ? 50 : formData.status === "confirmed" ? 80 : 100
+      };
+
+      // Add payment_received_date if status is paid
+      if (formData.status === "paid") {
+        dealData.payment_received_date = new Date().toISOString().split('T')[0];
+      }
+
+      const { data: dealResult, error } = await supabase
         .from("deals")
-        .insert({
-          title: formData.title,
-          client_name: formData.client_name,
-          amount: parseFloat(formData.amount),
-          status: formData.status,
-          expected_date: formData.expected_date || null,
-          description: formData.description || null,
-          probability: formData.status === "potential" ? 50 : formData.status === "confirmed" ? 80 : 100
-        });
+        .insert(dealData)
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // If deal is paid, create cashflow entry immediately
+      if (formData.status === "paid" && dealResult) {
+        await createCashflowEntry(dealResult.id, parseFloat(formData.amount), formData.title);
+      }
 
       toast({
         title: "Deal toegevoegd",
@@ -69,6 +83,26 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const createCashflowEntry = async (dealId: string, amount: number, description: string) => {
+    try {
+      const { error } = await supabase
+        .from("cashflow_entries")
+        .insert({
+          type: "income",
+          description: `Deal betaling: ${description}`,
+          category: "deals",
+          amount: amount,
+          transaction_date: new Date().toISOString().split('T')[0],
+          deal_id: dealId,
+          is_projected: false
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error creating cashflow entry:", error);
     }
   };
 
