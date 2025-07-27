@@ -6,6 +6,8 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Target, TrendingUp, Plus, Filter, BarChart3 } from 'lucide-react';
 import { useGoals, Goal } from '@/hooks/useGoals';
+import { useAuth } from '@/hooks/useAuth';
+import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { GoalStats } from '@/components/goals/GoalStats';
 import { GoalCard } from '@/components/goals/GoalCard';
 import { CreateGoalModal } from '@/components/goals/CreateGoalModal';
@@ -13,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export const GoalsPage = () => {
   const { goals, loading, stats, createGoal, updateGoal, deleteGoal } = useGoals();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('all');
 
   const filteredGoals = goals.filter(goal => {
@@ -29,7 +32,6 @@ export const GoalsPage = () => {
   });
 
   const handleEditGoal = (goal: Goal) => {
-    // For now, just a placeholder - would open edit modal
     console.log('Edit goal:', goal);
   };
 
@@ -40,21 +42,17 @@ export const GoalsPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
+        <DashboardHeader userName={user?.email} />
         <div className="container mx-auto px-4 py-8 space-y-8">
-          {/* Header Skeleton */}
           <div className="space-y-4">
             <Skeleton className="h-10 w-64" />
             <Skeleton className="h-6 w-96" />
           </div>
-          
-          {/* Stats Skeleton */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
               <Skeleton key={i} className="h-24 w-full" />
             ))}
           </div>
-          
-          {/* Goals Grid Skeleton */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
               <Skeleton key={i} className="h-64 w-full" />
@@ -67,6 +65,7 @@ export const GoalsPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <DashboardHeader userName={user?.email} />
       <div className="container mx-auto px-4 py-8 space-y-8">
         {/* Header */}
         <div className="space-y-4">
