@@ -49,15 +49,17 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
     scrollToBottom();
   }, [messages]);
 
-  // Auto-create first session if none exists
-  useEffect(() => {
-    if (!sessionsLoading && sessions.length === 0 && !currentSession) {
-      createSession();
-    }
-  }, [sessionsLoading, sessions.length, currentSession, createSession]);
+  // Remove auto-creation of sessions - only create when user sends first message
 
   const sendMessage = async () => {
-    if (!input.trim() || isLoading || !currentSession) return;
+    if (!input.trim() || isLoading) return;
+
+    // Create session if none exists when user sends first message
+    let sessionToUse = currentSession;
+    if (!sessionToUse) {
+      sessionToUse = await createSession();
+      if (!sessionToUse) return;
+    }
 
     const userMessage = input.trim();
     setInput('');
@@ -84,11 +86,11 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
         await addMessage('assistant', data.response);
         
         // Auto-generate title for new chats based on first user message
-        if (messages.length <= 1 && currentSession.title === 'Nieuwe Chat') {
+        if (messages.length <= 1 && sessionToUse.title === 'Nieuwe Chat') {
           const title = userMessage.length > 50 
             ? userMessage.substring(0, 50) + '...'
             : userMessage;
-          updateSessionTitle(currentSession.id, title);
+          updateSessionTitle(sessionToUse.id, title);
         }
       }
     } catch (error) {
@@ -149,7 +151,7 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
         {/* Messages */}
         <ScrollArea className="flex-1 p-6 max-h-[580px]">
           <div className="space-y-6 max-w-4xl mx-auto">
-            {messages.length === 0 ? (
+            {!currentSession || messages.length === 0 ? (
               <div className="text-center py-16 space-y-8 animate-fade-in">
                 {/* Welcome Section */}
                 <div className="relative">
