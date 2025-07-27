@@ -77,19 +77,20 @@ export const CreateGoalModal = ({ onCreateGoal }: CreateGoalModalProps) => {
           Nieuw Doel
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nieuw Doel Aanmaken</DialogTitle>
+          <DialogTitle className="text-xl">Nieuw Doel Aanmaken</DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="goal-type">Doel Type</Label>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Goal Type Section */}
+          <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+            <Label className="text-sm font-medium">Doel Type *</Label>
             <Select value={formData.goal_type} onValueChange={(value) => setFormData(prev => ({ ...prev, goal_type: value as Goal['goal_type'] }))}>
-              <SelectTrigger>
+              <SelectTrigger className="h-10">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-background border shadow-lg z-50">
                 {goalTypeOptions.map((option) => {
                   const Icon = option.icon;
                   return (
@@ -108,91 +109,107 @@ export const CreateGoalModal = ({ onCreateGoal }: CreateGoalModalProps) => {
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="goal-name">Doel Naam</Label>
-            <Input
-              id="goal-name"
-              value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Bijv. Maandelijkse omzet €10.000"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="goal-description">Beschrijving (optioneel)</Label>
-            <Textarea
-              id="goal-description"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Extra details over dit doel..."
-              rows={2}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="target-value">
-              Doel Waarde 
-              {formData.goal_type === 'deal_count' ? ' (aantal)' : ' (€)'}
-            </Label>
-            <Input
-              id="target-value"
-              type="number"
-              value={formData.target_value}
-              onChange={(e) => setFormData(prev => ({ ...prev, target_value: e.target.value }))}
-              placeholder={formData.goal_type === 'deal_count' ? '10' : '10000'}
-              min="0"
-              step={formData.goal_type === 'deal_count' ? '1' : '0.01'}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="deadline">Deadline</Label>
-            <Input
-              id="deadline"
-              type="date"
-              value={formData.deadline}
-              onChange={(e) => setFormData(prev => ({ ...prev, deadline: e.target.value }))}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="category">Categorie</Label>
-            <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="general">Algemeen</SelectItem>
-                <SelectItem value="sales">Verkoop</SelectItem>
-                <SelectItem value="marketing">Marketing</SelectItem>
-                <SelectItem value="operations">Operationeel</SelectItem>
-                <SelectItem value="financial">Financieel</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-            <div className="space-y-1">
-              <Label htmlFor="automatic">Automatische tracking</Label>
-              <p className="text-xs text-muted-foreground">
-                Laat voortgang automatisch bijwerken vanuit bestaande data
-              </p>
+          {/* Basic Information - Two Column Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="goal-name">Doel Naam *</Label>
+              <Input
+                id="goal-name"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Bijv. Maandelijkse omzet €10.000"
+                required
+                className="h-10"
+              />
             </div>
-            <Switch
-              id="automatic"
-              checked={formData.is_automatic}
-              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_automatic: checked }))}
-            />
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="goal-description">Beschrijving (optioneel)</Label>
+              <Textarea
+                id="goal-description"
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Extra details over dit doel..."
+                rows={2}
+                className="resize-none"
+              />
+            </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+          {/* Target and Deadline Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="target-value">
+                Doel Waarde * {formData.goal_type === 'deal_count' ? ' (aantal)' : ' (€)'}
+              </Label>
+              <Input
+                id="target-value"
+                type="number"
+                value={formData.target_value}
+                onChange={(e) => setFormData(prev => ({ ...prev, target_value: e.target.value }))}
+                placeholder={formData.goal_type === 'deal_count' ? '10' : '10000'}
+                min="0"
+                step={formData.goal_type === 'deal_count' ? '1' : '0.01'}
+                required
+                className="h-10"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="deadline">Deadline *</Label>
+              <Input
+                id="deadline"
+                type="date"
+                value={formData.deadline}
+                onChange={(e) => setFormData(prev => ({ ...prev, deadline: e.target.value }))}
+                required
+                className="h-10"
+              />
+            </div>
+          </div>
+
+          {/* Category and Settings */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="category">Categorie</Label>
+              <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
+                <SelectTrigger className="h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-background border shadow-lg z-50">
+                  <SelectItem value="general">📊 Algemeen</SelectItem>
+                  <SelectItem value="sales">💰 Verkoop</SelectItem>
+                  <SelectItem value="marketing">📈 Marketing</SelectItem>
+                  <SelectItem value="operations">⚙️ Operationeel</SelectItem>
+                  <SelectItem value="financial">💳 Financieel</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-muted-foreground">Tracking</Label>
+              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="space-y-1">
+                  <Label htmlFor="automatic" className="text-sm font-medium">Automatische tracking</Label>
+                  <p className="text-xs text-blue-600">
+                    Voortgang wordt automatisch bijgewerkt
+                  </p>
+                </div>
+                <Switch
+                  id="automatic"
+                  checked={formData.is_automatic}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_automatic: checked }))}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3 pt-6 border-t">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="px-6">
               Annuleren
             </Button>
-            <Button type="submit">
+            <Button type="submit" className="px-6">
               Doel Aanmaken
             </Button>
           </div>

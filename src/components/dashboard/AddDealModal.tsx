@@ -177,84 +177,116 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
           Deal Toevoegen
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nieuwe Deal</DialogTitle>
+          <DialogTitle className="text-xl">Nieuwe Deal Toevoegen</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-3">
-            <Label>Deal Type</Label>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Deal Type Section */}
+          <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
+            <Label className="text-sm font-medium">Deal Type</Label>
             <RadioGroup
               value={formData.deal_type}
               onValueChange={(value) => setFormData(prev => ({ ...prev, deal_type: value }))}
-              className="flex gap-6"
+              className="flex gap-8"
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="one_time" id="one_time" />
-                <Label htmlFor="one_time">Eenmalig Project</Label>
+                <Label htmlFor="one_time" className="cursor-pointer">Eenmalig Project</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="recurring" id="recurring" />
-                <Label htmlFor="recurring">Recurring Revenue (MRR)</Label>
+                <Label htmlFor="recurring" className="cursor-pointer">Recurring Revenue (MRR)</Label>
               </div>
             </RadioGroup>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="title">Deal Naam</Label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="bijv. Website ontwikkeling"
-              required
-            />
+          {/* Basic Information - Two Column Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Deal Naam *</Label>
+              <Input
+                id="title"
+                value={formData.title}
+                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="bijv. Website ontwikkeling"
+                required
+                className="h-10"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="client_name">Klant *</Label>
+              <Input
+                id="client_name"
+                value={formData.client_name}
+                onChange={(e) => setFormData(prev => ({ ...prev, client_name: e.target.value }))}
+                placeholder="bijv. Bedrijf XYZ"
+                required
+                className="h-10"
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="client_name">Klant</Label>
-            <Input
-              id="client_name"
-              value={formData.client_name}
-              onChange={(e) => setFormData(prev => ({ ...prev, client_name: e.target.value }))}
-              placeholder="bijv. Bedrijf XYZ"
-              required
-            />
+          {/* Financial Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="amount">
+                {formData.deal_type === "recurring" ? "Totaal Contract Waarde (€) *" : "Bedrag (€) *"}
+              </Label>
+              <Input
+                id="amount"
+                type="number"
+                value={formData.amount}
+                onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+                placeholder="0,00"
+                min="0"
+                step="0.01"
+                required
+                className="h-10"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="status">Status *</Label>
+              <Select
+                value={formData.status}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+              >
+                <SelectTrigger className="h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-background border shadow-lg z-50">
+                  <SelectItem value="potential">🟡 Potentieel</SelectItem>
+                  <SelectItem value="confirmed">🟢 Bevestigd</SelectItem>
+                  <SelectItem value="invoiced">📄 Gefactureerd</SelectItem>
+                  <SelectItem value="paid">💰 Betaald</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="amount">
-              {formData.deal_type === "recurring" ? "Totaal Contract Waarde (€)" : "Bedrag (€)"}
-            </Label>
-            <Input
-              id="amount"
-              type="number"
-              value={formData.amount}
-              onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-              placeholder="0,00"
-              min="0"
-              step="0.01"
-              required
-            />
-          </div>
-
+          {/* Recurring Deal Specific Fields */}
           {formData.deal_type === "recurring" && (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="monthly_amount">Maandelijks Bedrag (€) *</Label>
-                <Input
-                  id="monthly_amount"
-                  type="number"
-                  value={formData.monthly_amount}
-                  onChange={(e) => setFormData(prev => ({ ...prev, monthly_amount: e.target.value }))}
-                  placeholder="0,00"
-                  min="0"
-                  step="0.01"
-                  required
-                />
-              </div>
+            <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h4 className="font-medium text-blue-900">Recurring Revenue Details</h4>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="monthly_amount">Maandelijks Bedrag (€) *</Label>
+                  <Input
+                    id="monthly_amount"
+                    type="number"
+                    value={formData.monthly_amount}
+                    onChange={(e) => setFormData(prev => ({ ...prev, monthly_amount: e.target.value }))}
+                    placeholder="0,00"
+                    min="0"
+                    step="0.01"
+                    required
+                    className="h-10"
+                  />
+                </div>
 
-              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="start_date">Start Datum</Label>
                   <Input
@@ -262,8 +294,9 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
                     type="date"
                     value={formData.start_date}
                     onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
+                    className="h-10"
                   />
-                  <p className="text-xs text-muted-foreground">Optioneel - gebruikt voor projecties</p>
+                  <p className="text-xs text-blue-600">Voor projecties</p>
                 </div>
 
                 <div className="space-y-2">
@@ -275,58 +308,47 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
                     onChange={(e) => setFormData(prev => ({ ...prev, contract_length: e.target.value }))}
                     placeholder="bijv. 12"
                     min="1"
+                    className="h-10"
                   />
-                  <p className="text-xs text-muted-foreground">Laat leeg voor onbepaalde tijd</p>
+                  <p className="text-xs text-blue-600">Laat leeg voor onbepaalde tijd</p>
                 </div>
               </div>
-            </>
+            </div>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select
-              value={formData.status}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="potential">Potentieel</SelectItem>
-                <SelectItem value="confirmed">Bevestigd</SelectItem>
-                <SelectItem value="invoiced">Gefactureerd</SelectItem>
-                <SelectItem value="paid">Betaald</SelectItem>
-              </SelectContent>
-            </Select>
+          {/* Additional Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="expected_date">Verwachte Datum</Label>
+              <Input
+                id="expected_date"
+                type="date"
+                value={formData.expected_date}
+                onChange={(e) => setFormData(prev => ({ ...prev, expected_date: e.target.value }))}
+                className="h-10"
+              />
+            </div>
+
+            <div className="space-y-2 md:row-span-1">
+              <Label htmlFor="description">Beschrijving</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Optionele beschrijving van de deal..."
+                rows={2}
+                className="resize-none"
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="expected_date">Verwachte Datum</Label>
-            <Input
-              id="expected_date"
-              type="date"
-              value={formData.expected_date}
-              onChange={(e) => setFormData(prev => ({ ...prev, expected_date: e.target.value }))}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Beschrijving</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Optionele beschrijving van de deal..."
-              rows={3}
-            />
-          </div>
-
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+          {/* Action Buttons */}
+          <div className="flex justify-end space-x-3 pt-6 border-t">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="px-6">
               Annuleren
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Toevoegen..." : "Toevoegen"}
+            <Button type="submit" disabled={loading} className="px-6">
+              {loading ? "Toevoegen..." : "Deal Toevoegen"}
             </Button>
           </div>
         </form>

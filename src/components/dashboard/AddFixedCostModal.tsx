@@ -89,93 +89,116 @@ export const AddFixedCostModal = ({ onSuccess }: AddFixedCostModalProps) => {
           Vaste Kosten Toevoegen
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Nieuwe Vaste Kosten</DialogTitle>
+          <DialogTitle className="text-xl">Nieuwe Vaste Kosten Toevoegen</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Naam</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="bijv. Kantoorhuur"
-              required
-            />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Basic Information - Two Column Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Naam *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="bijv. Kantoorhuur"
+                required
+                className="h-10"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="category">Categorie *</Label>
+              <Select
+                value={formData.category}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+                required
+              >
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="Selecteer categorie" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border shadow-lg z-50">
+                  <SelectItem value="kantoor">🏢 Kantoor</SelectItem>
+                  <SelectItem value="software">💻 Software</SelectItem>
+                  <SelectItem value="marketing">📈 Marketing</SelectItem>
+                  <SelectItem value="verzekeringen">🛡️ Verzekeringen</SelectItem>
+                  <SelectItem value="transport">🚗 Transport</SelectItem>
+                  <SelectItem value="communicatie">📞 Communicatie</SelectItem>
+                  <SelectItem value="overig">📦 Overig</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="category">Categorie</Label>
-            <Select
-              value={formData.category}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
-              required
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecteer categorie" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="kantoor">Kantoor</SelectItem>
-                <SelectItem value="software">Software</SelectItem>
-                <SelectItem value="marketing">Marketing</SelectItem>
-                <SelectItem value="verzekeringen">Verzekeringen</SelectItem>
-                <SelectItem value="transport">Transport</SelectItem>
-                <SelectItem value="communicatie">Communicatie</SelectItem>
-                <SelectItem value="overig">Overig</SelectItem>
-              </SelectContent>
-            </Select>
+          {/* Financial and Frequency Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="amount">Bedrag (€) *</Label>
+              <Input
+                id="amount"
+                type="number"
+                value={formData.amount}
+                onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+                placeholder="0,00"
+                min="0"
+                step="0.01"
+                required
+                className="h-10"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="frequency">Frequentie *</Label>
+              <Select
+                value={formData.frequency}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, frequency: value }))}
+                required
+              >
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="Selecteer frequentie" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border shadow-lg z-50">
+                  <SelectItem value="monthly">📅 Maandelijks</SelectItem>
+                  <SelectItem value="quarterly">📊 Kwartaal</SelectItem>
+                  <SelectItem value="yearly">🗓️ Jaarlijks</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="amount">Bedrag (€)</Label>
-            <Input
-              id="amount"
-              type="number"
-              value={formData.amount}
-              onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-              placeholder="0,00"
-              min="0"
-              step="0.01"
-              required
-            />
+          {/* Date Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="start_date">Startdatum *</Label>
+              <Input
+                id="start_date"
+                type="date"
+                value={formData.start_date}
+                onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
+                required
+                className="h-10"
+              />
+            </div>
+            
+            {/* Info box for better UX */}
+            <div className="space-y-2">
+              <Label className="text-muted-foreground">Informatie</Label>
+              <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-sm text-blue-800">
+                  Deze kosten worden automatisch berekend in je cashflow overzicht en budgettering.
+                </p>
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="frequency">Frequentie</Label>
-            <Select
-              value={formData.frequency}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, frequency: value }))}
-              required
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecteer frequentie" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="monthly">Maandelijks</SelectItem>
-                <SelectItem value="quarterly">Kwartaal</SelectItem>
-                <SelectItem value="yearly">Jaarlijks</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="start_date">Startdatum</Label>
-            <Input
-              id="start_date"
-              type="date"
-              value={formData.start_date}
-              onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
-              required
-            />
-          </div>
-
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+          {/* Action Buttons */}
+          <div className="flex justify-end space-x-3 pt-6 border-t">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="px-6">
               Annuleren
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Toevoegen..." : "Toevoegen"}
+            <Button type="submit" disabled={loading} className="px-6">
+              {loading ? "Toevoegen..." : "Vaste Kosten Toevoegen"}
             </Button>
           </div>
         </form>
