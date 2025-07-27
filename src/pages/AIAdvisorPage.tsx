@@ -27,20 +27,9 @@ export const AIAdvisorPage = () => {
   }
 
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden">
-      {/* Simple top header */}
-      <div className="flex-shrink-0 h-12 border-b border-border bg-background/95 backdrop-blur-sm flex items-center justify-between px-4">
-        <h1 className="text-sm font-medium text-foreground">AI Financieel Adviseur</h1>
-        <button 
-          onClick={signOut}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          Uitloggen
-        </button>
-      </div>
-      
-      {/* Full screen chat interface */}
-      <div className="flex-1 overflow-hidden">
+    <div className="min-h-screen bg-background">
+      <DashboardHeader onLogout={signOut} userName={user?.email?.split("@")[0]} />
+      <div className="h-[calc(100vh-4rem)] overflow-hidden">
         <ModernChatInterface
           context={{
             monthlyIncome: metrics.monthlyIncome,
