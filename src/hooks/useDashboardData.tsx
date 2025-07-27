@@ -309,9 +309,35 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
         .filter(entry => entry.type === "income")
         .reduce((sum, entry) => sum + Number(entry.amount), 0);
       
-      const expenses = intervalEntries
+      const expensesFromEntries = intervalEntries
         .filter(entry => entry.type === "expense")
         .reduce((sum, entry) => sum + Number(entry.amount), 0);
+
+      // Add fixed costs for this interval
+      const intervalStart = new Date(date);
+      const intervalEnd = new Date(date);
+      if (intervalType === 'hour') {
+        intervalStart.setHours(i, 0, 0, 0);
+        intervalEnd.setHours(i, 59, 59, 999);
+      } else if (intervalType === 'day') {
+        intervalStart.setHours(0, 0, 0, 0);
+        intervalEnd.setHours(23, 59, 59, 999);
+      } else if (intervalType === 'month') {
+        intervalStart.setDate(1);
+        intervalStart.setHours(0, 0, 0, 0);
+        intervalEnd.setMonth(date.getMonth() + 1);
+        intervalEnd.setDate(0);
+        intervalEnd.setHours(23, 59, 59, 999);
+      }
+
+      const fixedCostsForInterval = calculateFixedCostsForPeriod(
+        data.fixedCosts,
+        intervalType === 'hour' ? 'day' : (intervalType as PeriodType),
+        intervalStart,
+        intervalEnd
+      );
+
+      const totalExpenses = expensesFromEntries + fixedCostsForInterval;
 
       let label = '';
       if (intervalType === 'hour') {
@@ -325,8 +351,8 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
       dataPoints.push({
         month: label,
         income,
-        expenses,
-        netCashflow: income - expenses
+        expenses: totalExpenses,
+        netCashflow: income - totalExpenses
       });
     }
 

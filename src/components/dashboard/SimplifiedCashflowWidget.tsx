@@ -145,7 +145,7 @@ export const SimplifiedCashflowWidget = ({
                 <Tooltip content={<CustomTooltip />} />
                 <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeDasharray="2 2" />
                 
-                {/* Income line */}
+                {/* Income line - using the correct field name from useDashboardData */}
                 <Line 
                   type="monotone" 
                   dataKey="income" 
@@ -153,9 +153,10 @@ export const SimplifiedCashflowWidget = ({
                   strokeWidth={3}
                   dot={{ fill: "hsl(var(--success))", strokeWidth: 2, r: 4 }}
                   activeDot={{ r: 6, stroke: "hsl(var(--success))", strokeWidth: 2 }}
+                  name="Inkomsten"
                 />
                 
-                {/* Expenses line */}
+                {/* Expenses line - using the correct field name from useDashboardData */}
                 <Line 
                   type="monotone" 
                   dataKey="expenses" 
@@ -163,9 +164,10 @@ export const SimplifiedCashflowWidget = ({
                   strokeWidth={3}
                   dot={{ fill: "hsl(var(--destructive))", strokeWidth: 2, r: 4 }}
                   activeDot={{ r: 6, stroke: "hsl(var(--destructive))", strokeWidth: 2 }}
+                  name="Vaste Kosten"
                 />
                 
-                {/* Net cashflow line */}
+                {/* Net cashflow line - using the correct field name from useDashboardData */}
                 <Line 
                   type="monotone" 
                   dataKey="netCashflow" 
@@ -173,6 +175,7 @@ export const SimplifiedCashflowWidget = ({
                   strokeWidth={4}
                   dot={{ fill: "hsl(var(--primary))", strokeWidth: 2, r: 5 }}
                   activeDot={{ r: 7, stroke: "hsl(var(--primary))", strokeWidth: 2 }}
+                  name="Netto"
                 />
               </LineChart>
             </ResponsiveContainer>
