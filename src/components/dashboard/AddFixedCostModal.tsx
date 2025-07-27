@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Plus } from "lucide-react";
 
 interface AddFixedCostModalProps {
@@ -13,6 +14,7 @@ interface AddFixedCostModalProps {
 }
 
 export const AddFixedCostModal = ({ onSuccess }: AddFixedCostModalProps) => {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -26,6 +28,16 @@ export const AddFixedCostModal = ({ onSuccess }: AddFixedCostModalProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to add fixed costs.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -37,7 +49,8 @@ export const AddFixedCostModal = ({ onSuccess }: AddFixedCostModalProps) => {
           amount: parseFloat(formData.amount),
           frequency: formData.frequency,
           start_date: formData.start_date,
-          is_active: true
+          is_active: true,
+          user_id: user.id
         });
 
       if (error) throw error;

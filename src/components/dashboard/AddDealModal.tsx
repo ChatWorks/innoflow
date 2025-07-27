@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Plus } from "lucide-react";
 
 interface AddDealModalProps {
@@ -15,6 +16,7 @@ interface AddDealModalProps {
 }
 
 export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -33,6 +35,16 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to add deals.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -47,7 +59,8 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
         deal_type: formData.deal_type,
         monthly_amount: formData.deal_type === "recurring" ? parseFloat(formData.monthly_amount) : null,
         contract_length: formData.deal_type === "recurring" ? parseInt(formData.contract_length) : null,
-        start_date: formData.deal_type === "recurring" ? formData.start_date : null
+        start_date: formData.deal_type === "recurring" ? formData.start_date : null,
+        user_id: user.id
       };
 
       // Add payment_received_date if status is paid
@@ -107,6 +120,8 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
   };
 
   const createCashflowEntry = async (dealId: string, amount: number, description: string) => {
+    if (!user) return;
+    
     try {
       const { error } = await supabase
         .from("cashflow_entries")
@@ -117,7 +132,8 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
           amount: amount,
           transaction_date: new Date().toISOString().split('T')[0],
           deal_id: dealId,
-          is_projected: false
+          is_projected: false,
+          user_id: user.id
         });
 
       if (error) throw error;
@@ -127,6 +143,8 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
   };
 
   const createRecurringRevenueEntry = async (dealId: string, monthlyAmount: number, startDate: string, contractLength: number | null) => {
+    if (!user) return;
+    
     try {
       const endDate = contractLength ? (() => {
         const date = new Date(startDate);
@@ -141,7 +159,8 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
           monthly_amount: monthlyAmount,
           start_date: startDate,
           end_date: endDate,
-          is_active: true
+          is_active: true,
+          user_id: user.id
         });
 
       if (error) throw error;

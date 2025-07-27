@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Deal {
@@ -31,6 +32,7 @@ interface EditDealModalProps {
 }
 
 export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealModalProps) => {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -123,6 +125,8 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
   };
 
   const createCashflowEntry = async (dealId: string, amount: number, description: string) => {
+    if (!user) return;
+    
     try {
       const { error } = await supabase
         .from("cashflow_entries")
@@ -133,7 +137,8 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
           amount: amount,
           transaction_date: new Date().toISOString().split('T')[0],
           deal_id: dealId,
-          is_projected: false
+          is_projected: false,
+          user_id: user.id
         });
 
       if (error) throw error;
@@ -143,6 +148,8 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
   };
 
   const upsertRecurringRevenueEntry = async (dealId: string, monthlyAmount: number, startDate: string, contractLength: number | null) => {
+    if (!user) return;
+    
     try {
       const endDate = contractLength ? (() => {
         const date = new Date(startDate);
@@ -157,7 +164,8 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
           monthly_amount: monthlyAmount,
           start_date: startDate,
           end_date: endDate,
-          is_active: true
+          is_active: true,
+          user_id: user.id
         }, { onConflict: 'deal_id' });
 
       if (error) throw error;

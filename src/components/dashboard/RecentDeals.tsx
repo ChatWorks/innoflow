@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Eye, Edit, MoreHorizontal, ArrowRight, Trash2 } from "lucide-react";
 import { AddDealModal } from "./AddDealModal";
@@ -30,6 +31,7 @@ interface RecentDealsProps {
 }
 
 export const RecentDeals = ({ deals, onViewDeal, onEditDeal, onDealsUpdate }: RecentDealsProps) => {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [editingDeal, setEditingDeal] = useState<any>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -147,6 +149,8 @@ export const RecentDeals = ({ deals, onViewDeal, onEditDeal, onDealsUpdate }: Re
   };
 
   const createCashflowEntry = async (dealId: string, amount: number, description: string) => {
+    if (!user) return;
+    
     try {
       const { error } = await supabase
         .from("cashflow_entries")
@@ -157,7 +161,8 @@ export const RecentDeals = ({ deals, onViewDeal, onEditDeal, onDealsUpdate }: Re
           amount: amount,
           transaction_date: new Date().toISOString().split('T')[0],
           deal_id: dealId,
-          is_projected: false
+          is_projected: false,
+          user_id: user.id
         });
 
       if (error) throw error;

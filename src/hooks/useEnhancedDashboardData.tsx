@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subDays, addMonths, eachMonthOfInterval, eachWeekOfInterval, eachDayOfInterval, format, parseISO, isSameMonth, isSameDay } from "date-fns";
 import { nl } from "date-fns/locale";
 
@@ -73,6 +74,7 @@ interface CashflowDataPoint {
 }
 
 export const useEnhancedDashboardData = (dateRange: DateRange) => {
+  const { user } = useAuth();
   const [data, setData] = useState<EnhancedDashboardData>({
     deals: [],
     fixedCosts: [],
@@ -82,6 +84,11 @@ export const useEnhancedDashboardData = (dateRange: DateRange) => {
   const { toast } = useToast();
 
   const fetchDashboardData = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    
     try {
       setLoading(true);
 
@@ -89,6 +96,7 @@ export const useEnhancedDashboardData = (dateRange: DateRange) => {
       const { data: deals, error: dealsError } = await supabase
         .from("deals")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (dealsError) throw dealsError;
@@ -97,6 +105,7 @@ export const useEnhancedDashboardData = (dateRange: DateRange) => {
       const { data: fixedCosts, error: fixedCostsError } = await supabase
         .from("fixed_costs")
         .select("*")
+        .eq("user_id", user.id)
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
@@ -106,6 +115,7 @@ export const useEnhancedDashboardData = (dateRange: DateRange) => {
       const { data: cashflowEntries, error: cashflowError } = await supabase
         .from("cashflow_entries")
         .select("*")
+        .eq("user_id", user.id)
         .gte("transaction_date", dateRange.from.toISOString().split('T')[0])
         .lte("transaction_date", dateRange.to.toISOString().split('T')[0])
         .order("transaction_date", { ascending: true });
@@ -132,7 +142,8 @@ export const useEnhancedDashboardData = (dateRange: DateRange) => {
               amount: deal.amount,
               transaction_date: deal.payment_received_date,
               deal_id: deal.id,
-              is_projected: false
+              is_projected: false,
+              user_id: user.id
             });
 
           if (error) {
@@ -156,7 +167,7 @@ export const useEnhancedDashboardData = (dateRange: DateRange) => {
     } finally {
       setLoading(false);
     }
-  }, [dateRange, toast]);
+  }, [dateRange, toast, user]);
 
   // Calculate metrics with enhanced analytics
   const metrics = useMemo((): EnhancedDashboardMetrics => {

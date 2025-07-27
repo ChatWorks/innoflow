@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { TimePeriod } from "@/components/dashboard/TimeFilter";
 
 interface DashboardData {
@@ -21,6 +22,7 @@ interface DashboardMetrics {
 }
 
 export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
+  const { user } = useAuth();
   const [data, setData] = useState<DashboardData>({
     deals: [],
     fixedCosts: [],
@@ -94,6 +96,11 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
   }, [getDateRange]);
 
   const fetchDashboardData = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    
     try {
       setLoading(true);
       const { start, end } = getDateRange(currentDate, period);
@@ -102,6 +109,7 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
       const { data: deals, error: dealsError } = await supabase
         .from("deals")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (dealsError) {
@@ -117,6 +125,7 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
       const { data: fixedCosts, error: costsError } = await supabase
         .from("fixed_costs")
         .select("*")
+        .eq("user_id", user.id)
         .eq("is_active", true);
 
       if (costsError) {
@@ -127,6 +136,7 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
       const { data: cashflowEntries, error: entriesError } = await supabase
         .from("cashflow_entries")
         .select("*")
+        .eq("user_id", user.id)
         .gte("transaction_date", start.toISOString().split('T')[0])
         .lte("transaction_date", end.toISOString().split('T')[0])
         .order("transaction_date", { ascending: false });
@@ -186,7 +196,7 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
     } finally {
       setLoading(false);
     }
-  }, [currentDate, period, getDateRange, toast]);
+  }, [currentDate, period, getDateRange, toast, user]);
 
   const calculateMetrics = useCallback((): DashboardMetrics => {
     const { start, end } = getDateRange(currentDate, period);
