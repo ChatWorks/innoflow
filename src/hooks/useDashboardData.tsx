@@ -171,15 +171,14 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
         return relevantDate && relevantDate >= start && relevantDate <= end;
       });
 
-      // Add deals as income entries for the current period based on expected dates
-      const dealsForIncome = filteredDeals.filter(deal => {
-        // Include all deals in the filtered period regardless of payment status
-        // The filtering logic above already ensures they belong to this period
+      // Create virtual cashflow entries for ALL deals for projection purposes
+      const allDealsForIncome = (deals || []).filter(deal => {
+        // Include all deals regardless of period for projection
         return deal.status === "paid" || deal.status === "confirmed" || deal.status === "potential";
       });
 
       // Create virtual cashflow entries for deals that don't have entries yet
-      const dealEntries = dealsForIncome.map(deal => {
+      const dealEntries = allDealsForIncome.map(deal => {
         // Use the same date logic as filtering for consistency
         let transactionDate = deal.payment_due_date || deal.expected_date || deal.payment_received_date || deal.created_at;
         
