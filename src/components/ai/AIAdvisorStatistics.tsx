@@ -66,50 +66,5 @@ export const AIAdvisorStatistics = ({ context }: AIAdvisorStatisticsProps) => {
     }
   ];
 
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      {stats.map((stat, index) => (
-        <Card 
-          key={stat.title} 
-          className={`${stat.color} border-0 hover-scale animate-fade-in`}
-          style={{ animationDelay: `${index * 100}ms` }}
-        >
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  {stat.title}
-                </p>
-                <p className="text-2xl font-bold mt-1">
-                  {stat.value}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {stat.description}
-                </p>
-              </div>
-              <stat.icon className={`h-8 w-8 ${stat.iconColor}`} />
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-      
-      {/* Start Chat Button */}
-      <Card className="border-2 border-dashed border-primary/30 hover:border-primary/50 hover-scale animate-fade-in bg-gradient-to-r from-primary/5 to-primary/10 group cursor-pointer transition-all duration-200"
-            style={{ animationDelay: "300ms" }}>
-        <CardContent className="p-6 h-full flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-12 h-12 rounded-full bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center mx-auto mb-3 transition-colors">
-              <MessageSquare className="h-6 w-6 text-primary group-hover:scale-110 transition-transform" />
-            </div>
-            <p className="text-sm font-medium text-primary group-hover:text-primary/80 transition-colors">
-              Nieuwe Chat
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Starten
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+  return null;
 };
