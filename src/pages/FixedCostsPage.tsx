@@ -118,7 +118,7 @@ export const FixedCostsPage = () => {
         {/* Hero Section */}
         <div className="mb-8 animate-fade-in">
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-600 via-red-600/90 to-red-600/80 p-8 text-white">
-            <div className="absolute inset-0 bg-black/10" />
+            <div className="absolute inset-0 bg-primary/10" />
             <div className="relative z-10">
               <h1 className="text-4xl font-bold font-manrope mb-2">
                 Vaste Kosten
