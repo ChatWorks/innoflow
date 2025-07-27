@@ -131,9 +131,8 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
   ];
 
   return (
-    <div className="h-full w-full">
-      <div className="flex h-full bg-background overflow-hidden">
-        {/* Sidebar */}
+    <div className="flex h-full w-full overflow-hidden">
+      {/* Sidebar */}
         <ChatSidebar
           sessions={sessions}
           currentSession={currentSession}
@@ -256,7 +255,6 @@ export const ModernChatInterface: React.FC<ModernChatInterfaceProps> = ({ contex
               <Send className="h-3 w-3" />
             </Button>
           </div>
-        </div>
         </div>
       </div>
     </div>

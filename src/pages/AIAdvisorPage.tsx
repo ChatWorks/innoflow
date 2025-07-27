@@ -27,9 +27,9 @@ export const AIAdvisorPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <DashboardHeader onLogout={signOut} userName={user?.email?.split("@")[0]} />
-      <div className="h-[calc(100vh-4rem)]">
+      <div className="flex-1 flex overflow-hidden">
         <ModernChatInterface
           context={{
             monthlyIncome: metrics.monthlyIncome,
