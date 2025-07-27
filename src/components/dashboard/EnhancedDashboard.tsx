@@ -186,11 +186,12 @@ export const EnhancedDashboard = () => {
                 className="lg:col-span-3"
                 showForecast={true}
               />
-              <RecentDeals 
-                deals={data.deals.slice(0, 5)} 
-                onDealsUpdate={refetch}
-                className="lg:col-span-2"
-              />
+              <div className="lg:col-span-2">
+                <RecentDeals 
+                  deals={data.deals.slice(0, 5)} 
+                  onDealsUpdate={refetch}
+                />
+              </div>
             </div>
           </TabsContent>
 
