@@ -45,11 +45,6 @@ export const calculateFixedCostsForPeriod = (
 
   fixedCosts?.forEach(cost => {
     if (!cost.is_active) return;
-    
-    // Debug log for one_time costs
-    if (cost.frequency === 'one_time') {
-      console.log('Processing one_time cost:', cost.id, cost.amount, cost.start_date, 'for period:', periodType, periodStart.toISOString(), periodEnd.toISOString());
-    }
 
     const costStartDate = new Date(cost.start_date);
     const costEndDate = cost.end_date ? new Date(cost.end_date) : new Date('2099-12-31');
@@ -82,10 +77,7 @@ export const calculateFixedCostsForPeriod = (
               const currentDay = new Date(periodStart);
               currentDay.setHours(0, 0, 0, 0);
               if (costStartDay.getTime() === currentDay.getTime()) {
-                console.log('Adding one_time cost:', costAmount, 'on day:', currentDay.toISOString());
                 totalFixedCosts += costAmount;
-              } else {
-                console.log('One_time cost date mismatch. Cost date:', costStartDay.toISOString(), 'Period date:', currentDay.toISOString());
               }
             }
           }
@@ -218,8 +210,10 @@ export const calculateDealsForPeriod = (
     }
 
     // Recurring deals - calculate based on period
-    if (deal.deal_type === 'recurring' && deal.monthly_amount && deal.start_date) {
+    if (deal.deal_type === 'recurring' && deal.monthly_amount && deal.start_date && (deal.status === 'confirmed' || deal.status === 'paid')) {
       const dealStartDate = new Date(deal.start_date);
+      
+      // Only count if the deal has started before or during the period
       if (dealStartDate <= periodEnd) {
         const monthlyAmount = Number(deal.monthly_amount);
         

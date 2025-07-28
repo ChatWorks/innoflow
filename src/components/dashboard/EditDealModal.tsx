@@ -221,23 +221,27 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="amount">
-              {formData.deal_type === "recurring" ? "Totaal Contract Waarde (€)" : "Bedrag (€)"}
-            </Label>
-            <Input
-              id="amount"
-              type="number"
-              value={formData.amount}
-              onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-              min="0"
-              step="0.01"
-              required
-            />
-          </div>
+          {/* One-time Project Fields */}
+          {formData.deal_type === "one_time" && (
+            <div className="space-y-2">
+              <Label htmlFor="amount">Bedrag (€)</Label>
+              <Input
+                id="amount"
+                type="number"
+                value={formData.amount}
+                onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+                min="0"
+                step="0.01"
+                required
+              />
+            </div>
+          )}
 
+          {/* Recurring MRR Fields */}
           {formData.deal_type === "recurring" && (
-            <>
+            <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h4 className="font-medium text-blue-900">Recurring Revenue Details</h4>
+              
               <div className="space-y-2">
                 <Label htmlFor="monthly_amount">Maandelijks Bedrag (€) *</Label>
                 <Input
@@ -260,7 +264,7 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
                     value={formData.start_date}
                     onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
                   />
-                  <p className="text-xs text-muted-foreground">Optioneel - gebruikt voor projecties</p>
+                  <p className="text-xs text-blue-600">Voor projecties</p>
                 </div>
 
                 <div className="space-y-2">
@@ -272,10 +276,10 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
                     onChange={(e) => setFormData(prev => ({ ...prev, contract_length: e.target.value }))}
                     min="1"
                   />
-                  <p className="text-xs text-muted-foreground">Laat leeg voor onbepaalde tijd</p>
+                  <p className="text-xs text-blue-600">Laat leeg voor onbepaalde tijd</p>
                 </div>
               </div>
-            </>
+            </div>
           )}
 
           <div className="space-y-2">
@@ -288,10 +292,10 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="potential">Potentieel</SelectItem>
-                <SelectItem value="confirmed">Bevestigd</SelectItem>
-                <SelectItem value="invoiced">Gefactureerd</SelectItem>
-                <SelectItem value="paid">Betaald</SelectItem>
+                <SelectItem value="potential">🟡 Potentieel</SelectItem>
+                <SelectItem value="confirmed">🟢 Bevestigd</SelectItem>
+                <SelectItem value="invoiced">📄 Gefactureerd</SelectItem>
+                <SelectItem value="paid">💰 Betaald</SelectItem>
               </SelectContent>
             </Select>
           </div>

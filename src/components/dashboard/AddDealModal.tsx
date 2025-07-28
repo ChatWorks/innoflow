@@ -29,6 +29,7 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
     // Recurring MRR fields
     monthly_amount: "",
     contract_length: "",
+    start_date: "",
     description: ""
   });
   const { toast } = useToast();
@@ -79,6 +80,7 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
         }
       } else {
         // Recurring MRR logic
+        const startDate = formData.start_date || new Date().toISOString().split('T')[0];
         const dealData = {
           title: formData.title,
           client_name: formData.client_name,
@@ -90,7 +92,7 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
           deal_type: "recurring",
           monthly_amount: parseFloat(formData.monthly_amount),
           contract_length: formData.contract_length ? parseInt(formData.contract_length) : null,
-          start_date: new Date().toISOString().split('T')[0], // Start today
+          start_date: startDate,
           user_id: user.id
         };
 
@@ -105,7 +107,6 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
         // Create recurring revenue entry
         if (dealResult) {
           const contractLength = formData.contract_length ? parseInt(formData.contract_length) : null;
-          const startDate = new Date().toISOString().split('T')[0];
           await createRecurringRevenueEntry(dealResult.id, parseFloat(formData.monthly_amount), startDate, contractLength);
         }
       }
@@ -123,6 +124,7 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
         payment_received_date: "",
         monthly_amount: "",
         contract_length: "",
+        start_date: "",
         description: ""
       });
       setOpen(false);
@@ -306,18 +308,30 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="contract_length">Contract Lengte (maanden)</Label>
+                  <Label htmlFor="start_date">Start Datum</Label>
                   <Input
-                    id="contract_length"
-                    type="number"
-                    value={formData.contract_length}
-                    onChange={(e) => setFormData(prev => ({ ...prev, contract_length: e.target.value }))}
-                    placeholder="bijv. 12"
-                    min="1"
+                    id="start_date"
+                    type="date"
+                    value={formData.start_date}
+                    onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
                     className="h-10"
                   />
-                  <p className="text-xs text-blue-600">Laat leeg voor onbepaalde tijd</p>
+                  <p className="text-xs text-blue-600">Laat leeg voor vandaag</p>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="contract_length">Contract Lengte (maanden)</Label>
+                <Input
+                  id="contract_length"
+                  type="number"
+                  value={formData.contract_length}
+                  onChange={(e) => setFormData(prev => ({ ...prev, contract_length: e.target.value }))}
+                  placeholder="bijv. 12"
+                  min="1"
+                  className="h-10"
+                />
+                <p className="text-xs text-blue-600">Laat leeg voor onbepaalde tijd</p>
               </div>
             </div>
           )}
