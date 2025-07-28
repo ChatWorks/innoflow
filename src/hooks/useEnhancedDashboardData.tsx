@@ -287,6 +287,14 @@ export const useEnhancedDashboardData = (dateRange: DateRange) => {
       
       // Add fixed costs
       const monthlyFixedCosts = fixedCosts.reduce((sum, cost) => {
+        const costStartDate = parseISO(cost.start_date);
+        const costEndDate = cost.end_date ? parseISO(cost.end_date) : null;
+        
+        // Check if cost is active during this month
+        if (costStartDate > monthEnd || (costEndDate && costEndDate < monthStart)) {
+          return sum;
+        }
+        
         let monthlyAmount = 0;
         switch (cost.frequency) {
           case 'monthly':
@@ -297,6 +305,12 @@ export const useEnhancedDashboardData = (dateRange: DateRange) => {
             break;
           case 'yearly':
             monthlyAmount = Number(cost.amount) / 12;
+            break;
+          case 'one_time':
+            // For one-time costs, only add if the start date falls within this month
+            if (costStartDate >= monthStart && costStartDate <= monthEnd) {
+              monthlyAmount = Number(cost.amount);
+            }
             break;
         }
         return sum + monthlyAmount;
