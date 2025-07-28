@@ -9,6 +9,7 @@ interface DashboardData {
   deals: any[];
   fixedCosts: any[];
   cashflowEntries: any[];
+  recurringRevenue: any[];
 }
 
 interface DashboardMetrics {
@@ -27,7 +28,8 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
   const [data, setData] = useState<DashboardData>({
     deals: [],
     fixedCosts: [],
-    cashflowEntries: []
+    cashflowEntries: [],
+    recurringRevenue: []
   });
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -133,15 +135,32 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
         console.error("Error fetching fixed costs:", costsError);
       }
 
-      // Filter deals based on payment_received_date within the selected period
+      // Fetch recurring revenue for MRR calculations
+      const { data: recurringRevenue, error: recurringError } = await supabase
+        .from("recurring_revenue")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("is_active", true);
+
+      if (recurringError) {
+        console.error("Error fetching recurring revenue:", recurringError);
+      }
+
+      // Filter deals based on correct criteria for each deal type
       const filteredDeals = (deals || []).filter(deal => {
-        // Use payment_received_date as primary date for filtering
-        if (deal.payment_received_date) {
+        // Voor eenmalige deals: gebruik payment_received_date
+        if (deal.deal_type === 'one_time' && deal.payment_received_date) {
           const paymentDate = new Date(deal.payment_received_date);
           return paymentDate >= start && paymentDate <= end;
         }
         
-        // For unpaid deals, use expected_date or payment_due_date for projections
+        // Voor MRR deals: gebruik start_date en check of actief in periode
+        if (deal.deal_type === 'recurring' && deal.start_date) {
+          const startDate = new Date(deal.start_date);
+          return startDate <= end; // MRR deal is actief als het gestart is voor/tijdens periode
+        }
+        
+        // Fallback voor andere deals
         if (deal.expected_date) {
           const expectedDate = new Date(deal.expected_date);
           return expectedDate >= start && expectedDate <= end;
@@ -158,7 +177,8 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
       setData({
         deals: filteredDeals,
         fixedCosts: fixedCosts || [],
-        cashflowEntries: [] // Not using cashflow entries anymore
+        cashflowEntries: [],
+        recurringRevenue: recurringRevenue || []
       });
 
     } catch (error) {
@@ -176,10 +196,30 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
   const calculateMetrics = useCallback((): DashboardMetrics => {
     const { start, end } = getDateRange(currentDate, period);
 
-    // Calculate income from deals (only paid deals count as actual income)
+    // Calculate income from deals with correct MRR logic
     const monthlyIncome = data.deals
-      .filter(deal => deal.status === "paid")
-      .reduce((sum, deal) => sum + Number(deal.amount), 0);
+      .filter(deal => {
+        // Eenmalige deals: alleen 'paid'
+        if (deal.deal_type === 'one_time') {
+          return deal.status === 'paid';
+        }
+        // MRR deals: 'confirmed' of 'paid'
+        if (deal.deal_type === 'recurring') {
+          return deal.status === 'confirmed' || deal.status === 'paid';
+        }
+        return false;
+      })
+      .reduce((sum, deal) => {
+        // Voor eenmalige deals: gebruik amount
+        if (deal.deal_type === 'one_time') {
+          return sum + Number(deal.amount);
+        }
+        // Voor MRR deals: gebruik monthly_amount
+        if (deal.deal_type === 'recurring') {
+          return sum + Number(deal.monthly_amount || 0);
+        }
+        return sum;
+      }, 0);
 
     // Calculate fixed costs for current period
     const fixedCostExpenses = calculateFixedCostsForPeriod(
@@ -275,10 +315,27 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
         return false;
       });
 
-      // Calculate income from paid deals only
-      const income = intervalDeals
-        .filter(deal => deal.status === "paid")
+      // Calculate income with proper MRR logic
+      let income = 0;
+
+      // Eenmalige deals
+      income += intervalDeals
+        .filter(deal => deal.deal_type === 'one_time' && deal.status === 'paid')
         .reduce((sum, deal) => sum + Number(deal.amount), 0);
+
+      // MRR deals - voeg maandelijks bedrag toe als deal actief is in dit interval
+      income += intervalDeals
+        .filter(deal => deal.deal_type === 'recurring' && (deal.status === 'confirmed' || deal.status === 'paid'))
+        .reduce((sum, deal) => {
+          if (deal.start_date) {
+            const startDate = new Date(deal.start_date);
+            // Check of MRR deal actief is in dit interval
+            if (startDate <= date) {
+              return sum + Number(deal.monthly_amount || 0);
+            }
+          }
+          return sum;
+        }, 0);
 
       // Calculate fixed costs for this interval
       const intervalStart = new Date(date);
