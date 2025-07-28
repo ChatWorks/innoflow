@@ -67,6 +67,12 @@ export const calculateFixedCostsForPeriod = (
               totalFixedCosts += costAmount / 365;
             } else if (cost.frequency === 'quarterly') {
               totalFixedCosts += costAmount / 90;
+            } else if (cost.frequency === 'one_time') {
+              // For one-time costs, add the full amount on the start date
+              const costStartDay = new Date(cost.start_date);
+              if (costStartDay.toDateString() === periodStart.toDateString()) {
+                totalFixedCosts += costAmount;
+              }
             }
           }
           break;
@@ -87,6 +93,12 @@ export const calculateFixedCostsForPeriod = (
             totalFixedCosts += (costAmount / 52) * weekFraction;
           } else if (cost.frequency === 'quarterly') {
             totalFixedCosts += (costAmount / 13) * weekFraction;
+          } else if (cost.frequency === 'one_time') {
+            // For one-time costs, add the full amount if the start date falls within this week
+            const costStartDate = new Date(cost.start_date);
+            if (isWithinInterval(costStartDate, { start: periodStart, end: periodEnd })) {
+              totalFixedCosts += costAmount;
+            }
           }
           break;
           
@@ -106,6 +118,12 @@ export const calculateFixedCostsForPeriod = (
             totalFixedCosts += (costAmount / 12) * monthFraction;
           } else if (cost.frequency === 'quarterly') {
             totalFixedCosts += (costAmount / 3) * monthFraction;
+          } else if (cost.frequency === 'one_time') {
+            // For one-time costs, add the full amount if the start date falls within this month
+            const costStartDate = new Date(cost.start_date);
+            if (isWithinInterval(costStartDate, { start: periodStart, end: periodEnd })) {
+              totalFixedCosts += costAmount;
+            }
           }
           break;
           
@@ -125,6 +143,12 @@ export const calculateFixedCostsForPeriod = (
             totalFixedCosts += (costAmount / 4) * quarterFraction;
           } else if (cost.frequency === 'quarterly') {
             totalFixedCosts += costAmount * quarterFraction;
+          } else if (cost.frequency === 'one_time') {
+            // For one-time costs, add the full amount if the start date falls within this quarter
+            const costStartDate = new Date(cost.start_date);
+            if (isWithinInterval(costStartDate, { start: periodStart, end: periodEnd })) {
+              totalFixedCosts += costAmount;
+            }
           }
           break;
           
@@ -144,6 +168,12 @@ export const calculateFixedCostsForPeriod = (
             totalFixedCosts += costAmount * yearFraction;
           } else if (cost.frequency === 'quarterly') {
             totalFixedCosts += (costAmount * 4) * yearFraction;
+          } else if (cost.frequency === 'one_time') {
+            // For one-time costs, add the full amount if the start date falls within this year
+            const costStartDate = new Date(cost.start_date);
+            if (isWithinInterval(costStartDate, { start: periodStart, end: periodEnd })) {
+              totalFixedCosts += costAmount;
+            }
           }
           break;
       }
