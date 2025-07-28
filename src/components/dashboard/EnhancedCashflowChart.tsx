@@ -67,7 +67,7 @@ export const EnhancedCashflowChart = ({
       setData(propData);
       setLoading(false);
     }
-  }, [propData, showRevenueBreakdown]);
+  }, [propData, showRevenueBreakdown, applyVat]); // Added applyVat dependency
 
   const generateEnhancedData = async () => {
     try {
@@ -93,7 +93,7 @@ export const EnhancedCashflowChart = ({
         
         const isHistorical = i >= 0;
         
-        // Calculate one-time revenue (always store as base amount, BTW will be applied in display)
+        // Calculate one-time revenue (store with BTW already applied)
         const oneTimeRevenue = deals
           ?.filter(deal => {
             if (!isHistorical) return 0; // No historical data for future
@@ -102,19 +102,19 @@ export const EnhancedCashflowChart = ({
             return paymentDate.getMonth() === monthDate.getMonth() && 
                    paymentDate.getFullYear() === monthDate.getFullYear();
           })
-          .reduce((sum, deal) => sum + Number(deal.amount), 0) || 0;
+          .reduce((sum, deal) => sum + applyVat(Number(deal.amount)), 0) || 0;
 
-        // Calculate recurring revenue (always store as base amount, BTW will be applied in display)
+        // Calculate recurring revenue (store with BTW already applied)
         const mrrAmount = recurringRevenue
           ?.filter(mrr => {
             const startDate = new Date(mrr.start_date);
             const endDate = mrr.end_date ? new Date(mrr.end_date) : new Date(2030, 11, 31);
             return monthDate >= startDate && monthDate <= endDate;
           })
-          .reduce((sum, mrr) => sum + Number(mrr.monthly_amount), 0) || 0;
+          .reduce((sum, mrr) => sum + applyVat(Number(mrr.monthly_amount)), 0) || 0;
 
         const totalIncome = oneTimeRevenue + mrrAmount;
-        const expenses = 2000; // Mock expenses (base amount)
+        const expenses = applyVat(2000); // Mock expenses with BTW applied
         
         dataPoints.push({
           month: monthStr,
