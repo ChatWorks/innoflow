@@ -230,24 +230,9 @@ export const EnhancedCashflowChart = ({
     }
   };
 
-  // Apply VAT to the data for chart display (but keep original data intact)
-  const getDisplayData = () => {
-    const zoomedData = getZoomedData();
-    return zoomedData.map(point => ({
-      ...point,
-      income: applyVat(point.income),
-      expenses: applyVat(point.expenses),
-      netCashflow: applyVat(point.netCashflow),
-      oneTimeRevenue: applyVat(point.oneTimeRevenue || 0),
-      recurringRevenue: applyVat(point.recurringRevenue || 0),
-      forecastIncome: point.forecastIncome ? applyVat(point.forecastIncome) : undefined,
-      forecastExpenses: point.forecastExpenses ? applyVat(point.forecastExpenses) : undefined,
-      forecastNetCashflow: point.forecastNetCashflow ? applyVat(point.forecastNetCashflow) : undefined
-    }));
-  };
-
-  const displayData = getDisplayData();
-  const latestData = displayData[displayData.length - 1];
+  // Use data as-is (BTW is already applied by parent components when toggle is on)
+  const zoomedData = getZoomedData();
+  const latestData = zoomedData[zoomedData.length - 1];
   const trend = latestData?.netCashflow >= 0 ? "positive" : "negative";
 
   if (loading) {
@@ -340,7 +325,7 @@ export const EnhancedCashflowChart = ({
         <div className="h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
-              data={displayData}
+              data={zoomedData}
               margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
               onMouseMove={(data) => setHoveredData(data)}
               onMouseLeave={() => setHoveredData(null)}
