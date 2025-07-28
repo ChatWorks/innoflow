@@ -93,7 +93,7 @@ export const EnhancedCashflowChart = ({
         
         const isHistorical = i >= 0;
         
-        // Calculate one-time revenue
+        // Calculate one-time revenue (always store as base amount, BTW will be applied in display)
         const oneTimeRevenue = deals
           ?.filter(deal => {
             if (!isHistorical) return 0; // No historical data for future
@@ -104,7 +104,7 @@ export const EnhancedCashflowChart = ({
           })
           .reduce((sum, deal) => sum + Number(deal.amount), 0) || 0;
 
-        // Calculate recurring revenue
+        // Calculate recurring revenue (always store as base amount, BTW will be applied in display)
         const mrrAmount = recurringRevenue
           ?.filter(mrr => {
             const startDate = new Date(mrr.start_date);
@@ -114,7 +114,7 @@ export const EnhancedCashflowChart = ({
           .reduce((sum, mrr) => sum + Number(mrr.monthly_amount), 0) || 0;
 
         const totalIncome = oneTimeRevenue + mrrAmount;
-        const expenses = 2000; // Mock expenses
+        const expenses = 2000; // Mock expenses (base amount)
         
         dataPoints.push({
           month: monthStr,
@@ -184,7 +184,7 @@ export const EnhancedCashflowChart = ({
                   entry.name.includes('income') ? "text-success" :
                   entry.value >= 0 ? "text-success" : "text-destructive"
                 )}>
-                  {formatCurrency(applyVat(entry.value))}
+                  {formatCurrency(entry.value)}
                 </span>
               </div>
             ))}
@@ -230,8 +230,24 @@ export const EnhancedCashflowChart = ({
     }
   };
 
-  const zoomedData = getZoomedData();
-  const latestData = data[data.length - 1];
+  // Apply VAT to the data for chart display (but keep original data intact)
+  const getDisplayData = () => {
+    const zoomedData = getZoomedData();
+    return zoomedData.map(point => ({
+      ...point,
+      income: applyVat(point.income),
+      expenses: applyVat(point.expenses),
+      netCashflow: applyVat(point.netCashflow),
+      oneTimeRevenue: applyVat(point.oneTimeRevenue || 0),
+      recurringRevenue: applyVat(point.recurringRevenue || 0),
+      forecastIncome: point.forecastIncome ? applyVat(point.forecastIncome) : undefined,
+      forecastExpenses: point.forecastExpenses ? applyVat(point.forecastExpenses) : undefined,
+      forecastNetCashflow: point.forecastNetCashflow ? applyVat(point.forecastNetCashflow) : undefined
+    }));
+  };
+
+  const displayData = getDisplayData();
+  const latestData = displayData[displayData.length - 1];
   const trend = latestData?.netCashflow >= 0 ? "positive" : "negative";
 
   if (loading) {
@@ -274,7 +290,7 @@ export const EnhancedCashflowChart = ({
               </Badge>
               {latestData && (
                 <span className="text-sm text-muted-foreground">
-                  Laatste: {formatCurrency(applyVat(latestData.netCashflow))}
+                  Laatste: {formatCurrency(latestData.netCashflow)}
                 </span>
               )}
             </div>
@@ -324,17 +340,7 @@ export const EnhancedCashflowChart = ({
         <div className="h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
-              data={zoomedData.map(point => ({
-                ...point,
-                income: applyVat(point.income),
-                expenses: applyVat(point.expenses),
-                netCashflow: applyVat(point.netCashflow),
-                oneTimeRevenue: applyVat(point.oneTimeRevenue || 0),
-                recurringRevenue: applyVat(point.recurringRevenue || 0),
-                forecastIncome: point.forecastIncome ? applyVat(point.forecastIncome) : undefined,
-                forecastExpenses: point.forecastExpenses ? applyVat(point.forecastExpenses) : undefined,
-                forecastNetCashflow: point.forecastNetCashflow ? applyVat(point.forecastNetCashflow) : undefined
-              }))}
+              data={displayData}
               margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
               onMouseMove={(data) => setHoveredData(data)}
               onMouseLeave={() => setHoveredData(null)}
