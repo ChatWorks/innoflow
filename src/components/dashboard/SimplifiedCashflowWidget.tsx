@@ -75,7 +75,7 @@ export const SimplifiedCashflowWidget = ({
                entry.dataKey === 'expenses' ? 'Vaste Kosten' : 'Netto'}:
             </span>
             <span className="font-medium text-foreground ml-auto">
-              {formatCurrency(applyVat(entry.value))}
+              {formatCurrency(entry.value)}
             </span>
           </div>
         ))}
