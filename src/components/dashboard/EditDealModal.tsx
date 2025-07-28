@@ -72,10 +72,18 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
     setLoading(true);
 
     try {
+      // Calculate total amount for recurring deals
+      let dealAmount = parseFloat(formData.amount);
+      if (formData.deal_type === "recurring" && formData.monthly_amount) {
+        const monthlyAmount = parseFloat(formData.monthly_amount);
+        const contractLength = formData.contract_length ? parseInt(formData.contract_length) : null;
+        dealAmount = contractLength ? monthlyAmount * contractLength : monthlyAmount * 12;
+      }
+
       const updateData: any = {
         title: formData.title,
         client_name: formData.client_name,
-        amount: parseFloat(formData.amount),
+        amount: dealAmount,
         status: formData.status,
         payment_received_date: formData.payment_received_date || null,
         description: formData.description || null,
@@ -300,21 +308,24 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
             </Select>
           </div>
 
-          <div className="space-y-4 p-4 bg-green-50 rounded-lg border border-green-200">
-            <h4 className="font-medium text-green-900">Betaal Informatie</h4>
-            
-            <div className="space-y-2">
-              <Label htmlFor="payment_received_date">Betaal Datum</Label>
-              <Input
-                id="payment_received_date"
-                type="date"
-                value={formData.payment_received_date}
-                onChange={(e) => setFormData(prev => ({ ...prev, payment_received_date: e.target.value }))}
-                className="h-10"
-              />
-              <p className="text-xs text-green-600">Datum waarop de betaling is ontvangen</p>
+          {/* Payment Information - Only show for one-time projects or when deal is paid */}
+          {(formData.deal_type === "one_time" || formData.status === "paid") && (
+            <div className="space-y-4 p-4 bg-green-50 rounded-lg border border-green-200">
+              <h4 className="font-medium text-green-900">Betaal Informatie</h4>
+              
+              <div className="space-y-2">
+                <Label htmlFor="payment_received_date">Betaal Datum</Label>
+                <Input
+                  id="payment_received_date"
+                  type="date"
+                  value={formData.payment_received_date}
+                  onChange={(e) => setFormData(prev => ({ ...prev, payment_received_date: e.target.value }))}
+                  className="h-10"
+                />
+                <p className="text-xs text-green-600">Datum waarop de betaling is ontvangen</p>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="description">Beschrijving</Label>

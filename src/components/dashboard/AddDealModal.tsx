@@ -81,17 +81,21 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
       } else {
         // Recurring MRR logic
         const startDate = formData.start_date || new Date().toISOString().split('T')[0];
+        const monthlyAmount = parseFloat(formData.monthly_amount);
+        const contractLength = formData.contract_length ? parseInt(formData.contract_length) : null;
+        const totalAmount = contractLength ? monthlyAmount * contractLength : monthlyAmount * 12; // Default to 12 months if indefinite
+        
         const dealData = {
           title: formData.title,
           client_name: formData.client_name,
-          amount: 0, // Not used for recurring
+          amount: totalAmount, // Show total contract value
           status: "confirmed", // Always confirmed for MRR
           payment_received_date: null,
           description: formData.description || null,
           probability: 80,
           deal_type: "recurring",
-          monthly_amount: parseFloat(formData.monthly_amount),
-          contract_length: formData.contract_length ? parseInt(formData.contract_length) : null,
+          monthly_amount: monthlyAmount,
+          contract_length: contractLength,
           start_date: startDate,
           user_id: user.id
         };
@@ -106,8 +110,7 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
 
         // Create recurring revenue entry
         if (dealResult) {
-          const contractLength = formData.contract_length ? parseInt(formData.contract_length) : null;
-          await createRecurringRevenueEntry(dealResult.id, parseFloat(formData.monthly_amount), startDate, contractLength);
+          await createRecurringRevenueEntry(dealResult.id, monthlyAmount, startDate, contractLength);
         }
       }
 
