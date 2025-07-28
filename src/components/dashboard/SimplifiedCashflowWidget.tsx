@@ -75,7 +75,7 @@ export const SimplifiedCashflowWidget = ({
                entry.dataKey === 'expenses' ? 'Vaste Kosten' : 'Netto'}:
             </span>
             <span className="font-medium text-foreground ml-auto">
-              {formatCurrency(entry.value)}
+              {formatCurrency(applyVat(entry.value))}
             </span>
           </div>
         ))}
@@ -108,7 +108,7 @@ export const SimplifiedCashflowWidget = ({
             📊 Cashflow Overzicht
           </CardTitle>
           <Badge variant="outline" className="font-medium">
-            Totaal: {formatCurrency(metrics.netCashflow)}
+            Totaal: {formatCurrency(applyVat(metrics.netCashflow))}
           </Badge>
         </div>
       </CardHeader>
@@ -118,15 +118,15 @@ export const SimplifiedCashflowWidget = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-4 rounded-lg bg-success/10 border border-success/20">
             <div className="text-sm font-medium text-success/80 mb-1">Totale Inkomsten</div>
-            <div className="text-2xl font-bold text-success">{formatCurrency(metrics.monthlyIncome)}</div>
+            <div className="text-2xl font-bold text-success">{formatCurrency(applyVat(metrics.monthlyIncome))}</div>
           </div>
           <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
             <div className="text-sm font-medium text-destructive/80 mb-1">Vaste Kosten</div>
-            <div className="text-2xl font-bold text-destructive">{formatCurrency(metrics.monthlyExpenses)}</div>
+            <div className="text-2xl font-bold text-destructive">{formatCurrency(applyVat(metrics.monthlyExpenses))}</div>
           </div>
           <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
             <div className="text-sm font-medium text-primary/80 mb-1">Netto Resultaat</div>
-            <div className="text-2xl font-bold text-primary">{formatCurrency(metrics.netCashflow)}</div>
+            <div className="text-2xl font-bold text-primary">{formatCurrency(applyVat(metrics.netCashflow))}</div>
           </div>
         </div>
 
@@ -135,7 +135,12 @@ export const SimplifiedCashflowWidget = ({
           <div className="h-[400px] w-full">
             <ResponsiveContainer width="100%" height={400}>
               <LineChart 
-                data={cashflowData} 
+                data={cashflowData.map(point => ({
+                  ...point,
+                  income: applyVat(point.income),
+                  expenses: applyVat(point.expenses),
+                  netCashflow: applyVat(point.netCashflow)
+                }))} 
                 margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
               >
                 <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
