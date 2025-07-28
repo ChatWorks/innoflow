@@ -75,7 +75,9 @@ export const calculateFixedCostsForPeriod = (
               totalFixedCosts += costAmount / 90;
             } else if (cost.frequency === 'one_time') {
               // For one-time costs, add the full amount on the start date
-              const costStartDay = new Date(cost.start_date);
+              // Parse the date correctly to avoid timezone issues
+              const [year, month, day] = cost.start_date.split('-').map(Number);
+              const costStartDay = new Date(year, month - 1, day);
               costStartDay.setHours(0, 0, 0, 0);
               const currentDay = new Date(periodStart);
               currentDay.setHours(0, 0, 0, 0);
