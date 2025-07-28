@@ -3,17 +3,21 @@ import { Calendar, LogOut, Settings, User, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useNavigate, useLocation } from "react-router-dom";
+
 interface DashboardHeaderProps {
   onLogout?: () => void;
   userName?: string;
 }
+
 export const DashboardHeader = ({
   onLogout,
   userName = "Team Member"
 }: DashboardHeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  return <header className="bg-card border-b border-border">
+
+  return (
+    <header className="bg-card border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo and Navigation */}
@@ -75,10 +79,7 @@ export const DashboardHeader = ({
 
           {/* Right side actions */}
           <div className="flex items-center space-x-4">
-            <Button variant="outline" size="sm" className="hidden sm:inline-flex">
-              <Calendar className="w-4 h-4 mr-2" />
-              Datum Filter
-            </Button>
+            {/* Date filter button removed as requested */}
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -87,10 +88,17 @@ export const DashboardHeader = ({
                   <span className="hidden sm:inline font-medium">{userName}</span>
                 </Button>
               </DropdownMenuTrigger>
-              
+              {/* Added DropdownMenuContent with Logout option */}
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={onLogout}>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  <span>Uitloggen</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
       </div>
-    </header>;
+    </header>
+  );
 };
