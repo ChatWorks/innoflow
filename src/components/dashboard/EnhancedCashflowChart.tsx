@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useVat } from "@/contexts/VatContext";
 import { 
   LineChart, 
   Line, 
@@ -50,7 +51,8 @@ export const EnhancedCashflowChart = ({
   showForecast = true,
   onDataPointClick,
   showRevenueBreakdown = false
-}: EnhancedCashflowChartProps) => {
+ }: EnhancedCashflowChartProps) => {
+  const { applyVat } = useVat();
   const [zoomLevel, setZoomLevel] = useState<"all" | "recent" | "forecast">("all");
   const [hoveredData, setHoveredData] = useState<any>(null);
   const [data, setData] = useState<CashflowDataPoint[]>(propData || []);
@@ -182,7 +184,7 @@ export const EnhancedCashflowChart = ({
                   entry.name.includes('income') ? "text-success" :
                   entry.value >= 0 ? "text-success" : "text-destructive"
                 )}>
-                  {formatCurrency(entry.value)}
+                  {formatCurrency(applyVat(entry.value))}
                 </span>
               </div>
             ))}
@@ -272,7 +274,7 @@ export const EnhancedCashflowChart = ({
               </Badge>
               {latestData && (
                 <span className="text-sm text-muted-foreground">
-                  Laatste: {formatCurrency(latestData.netCashflow)}
+                  Laatste: {formatCurrency(applyVat(latestData.netCashflow))}
                 </span>
               )}
             </div>
@@ -322,7 +324,17 @@ export const EnhancedCashflowChart = ({
         <div className="h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
-              data={zoomedData}
+              data={zoomedData.map(point => ({
+                ...point,
+                income: applyVat(point.income),
+                expenses: applyVat(point.expenses),
+                netCashflow: applyVat(point.netCashflow),
+                oneTimeRevenue: applyVat(point.oneTimeRevenue || 0),
+                recurringRevenue: applyVat(point.recurringRevenue || 0),
+                forecastIncome: point.forecastIncome ? applyVat(point.forecastIncome) : undefined,
+                forecastExpenses: point.forecastExpenses ? applyVat(point.forecastExpenses) : undefined,
+                forecastNetCashflow: point.forecastNetCashflow ? applyVat(point.forecastNetCashflow) : undefined
+              }))}
               margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
               onMouseMove={(data) => setHoveredData(data)}
               onMouseLeave={() => setHoveredData(null)}
