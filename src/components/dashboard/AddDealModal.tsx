@@ -22,14 +22,14 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
   const [formData, setFormData] = useState({
     title: "",
     client_name: "",
-    amount: "",
-    status: "potential",
-    payment_received_date: "",
-    description: "",
     deal_type: "one_time",
+    // One-time project fields
+    amount: "",
+    payment_received_date: "",
+    // Recurring MRR fields
     monthly_amount: "",
     contract_length: "",
-    start_date: ""
+    description: ""
   });
   const { toast } = useToast();
 
@@ -48,39 +48,66 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
     setLoading(true);
 
     try {
-      const dealData: any = {
-        title: formData.title,
-        client_name: formData.client_name,
-        amount: parseFloat(formData.amount),
-        status: formData.status,
-        payment_received_date: formData.payment_received_date || null,
-        description: formData.description || null,
-        probability: formData.status === "potential" ? 50 : formData.status === "confirmed" ? 80 : 100,
-        deal_type: formData.deal_type,
-        monthly_amount: formData.deal_type === "recurring" ? parseFloat(formData.monthly_amount) : null,
-        contract_length: formData.deal_type === "recurring" ? parseInt(formData.contract_length) : null,
-        start_date: formData.deal_type === "recurring" ? formData.start_date : null,
-        user_id: user.id
-      };
+      if (formData.deal_type === "one_time") {
+        // One-time project logic
+        const dealData = {
+          title: formData.title,
+          client_name: formData.client_name,
+          amount: parseFloat(formData.amount),
+          status: "paid", // Always paid for one-time projects
+          payment_received_date: formData.payment_received_date,
+          description: formData.description || null,
+          probability: 100,
+          deal_type: "one_time",
+          monthly_amount: null,
+          contract_length: null,
+          start_date: null,
+          user_id: user.id
+        };
 
-      const { data: dealResult, error } = await supabase
-        .from("deals")
-        .insert(dealData)
-        .select()
-        .single();
+        const { data: dealResult, error } = await supabase
+          .from("deals")
+          .insert(dealData)
+          .select()
+          .single();
 
-      if (error) throw error;
+        if (error) throw error;
 
-      // If deal is paid, create cashflow entry immediately
-      if (formData.status === "paid" && dealResult) {
-        await createCashflowEntry(dealResult.id, parseFloat(formData.amount), formData.title);
-      }
+        // Create cashflow entry for one-time payment
+        if (dealResult) {
+          await createCashflowEntry(dealResult.id, parseFloat(formData.amount), formData.title);
+        }
+      } else {
+        // Recurring MRR logic
+        const dealData = {
+          title: formData.title,
+          client_name: formData.client_name,
+          amount: 0, // Not used for recurring
+          status: "confirmed", // Always confirmed for MRR
+          payment_received_date: null,
+          description: formData.description || null,
+          probability: 80,
+          deal_type: "recurring",
+          monthly_amount: parseFloat(formData.monthly_amount),
+          contract_length: formData.contract_length ? parseInt(formData.contract_length) : null,
+          start_date: new Date().toISOString().split('T')[0], // Start today
+          user_id: user.id
+        };
 
-      // If it's a recurring deal and confirmed/paid, create recurring revenue entry
-      if (formData.deal_type === "recurring" && (formData.status === "confirmed" || formData.status === "paid") && dealResult && formData.monthly_amount) {
-        const contractLength = formData.contract_length ? parseInt(formData.contract_length) : null;
-        const startDate = formData.start_date || new Date().toISOString().split('T')[0];
-        await createRecurringRevenueEntry(dealResult.id, parseFloat(formData.monthly_amount), startDate, contractLength);
+        const { data: dealResult, error } = await supabase
+          .from("deals")
+          .insert(dealData)
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        // Create recurring revenue entry
+        if (dealResult) {
+          const contractLength = formData.contract_length ? parseInt(formData.contract_length) : null;
+          const startDate = new Date().toISOString().split('T')[0];
+          await createRecurringRevenueEntry(dealResult.id, parseFloat(formData.monthly_amount), startDate, contractLength);
+        }
       }
 
       toast({
@@ -91,14 +118,12 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
       setFormData({
         title: "",
         client_name: "",
-        amount: "",
-        status: "potential",
-        payment_received_date: "",
-        description: "",
         deal_type: "one_time",
+        amount: "",
+        payment_received_date: "",
         monthly_amount: "",
         contract_length: "",
-        start_date: ""
+        description: ""
       });
       setOpen(false);
       onSuccess?.();
@@ -196,7 +221,7 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
             </RadioGroup>
           </div>
 
-          {/* Basic Information - Two Column Layout */}
+          {/* Basic Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="title">Deal Naam *</Label>
@@ -223,50 +248,48 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
             </div>
           </div>
 
-          {/* Financial Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="amount">
-                {formData.deal_type === "recurring" ? "Totaal Contract Waarde (€) *" : "Bedrag (€) *"}
-              </Label>
-              <Input
-                id="amount"
-                type="number"
-                value={formData.amount}
-                onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-                placeholder="0,00"
-                min="0"
-                step="0.01"
-                required
-                className="h-10"
-              />
-            </div>
+          {/* One-time Project Fields */}
+          {formData.deal_type === "one_time" && (
+            <div className="space-y-4 p-4 bg-green-50 rounded-lg border border-green-200">
+              <h4 className="font-medium text-green-900">Eenmalig Project Details</h4>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="amount">Bedrag (€) *</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    value={formData.amount}
+                    onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+                    placeholder="0,00"
+                    min="0"
+                    step="0.01"
+                    required
+                    className="h-10"
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="status">Status *</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
-              >
-                <SelectTrigger className="h-10">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-background border shadow-lg z-50">
-                  <SelectItem value="potential">🟡 Potentieel</SelectItem>
-                  <SelectItem value="confirmed">🟢 Bevestigd</SelectItem>
-                  <SelectItem value="invoiced">📄 Gefactureerd</SelectItem>
-                  <SelectItem value="paid">💰 Betaald</SelectItem>
-                </SelectContent>
-              </Select>
+                <div className="space-y-2">
+                  <Label htmlFor="payment_received_date">Betaal Datum *</Label>
+                  <Input
+                    id="payment_received_date"
+                    type="date"
+                    value={formData.payment_received_date}
+                    onChange={(e) => setFormData(prev => ({ ...prev, payment_received_date: e.target.value }))}
+                    required
+                    className="h-10"
+                  />
+                </div>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Recurring Deal Specific Fields */}
+          {/* Recurring MRR Fields */}
           {formData.deal_type === "recurring" && (
             <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
               <h4 className="font-medium text-blue-900">Recurring Revenue Details</h4>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="monthly_amount">Maandelijks Bedrag (€) *</Label>
                   <Input
@@ -280,18 +303,6 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
                     required
                     className="h-10"
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="start_date">Start Datum</Label>
-                  <Input
-                    id="start_date"
-                    type="date"
-                    value={formData.start_date}
-                    onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
-                    className="h-10"
-                  />
-                  <p className="text-xs text-blue-600">Voor projecties</p>
                 </div>
 
                 <div className="space-y-2">
@@ -311,25 +322,9 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
             </div>
           )}
 
-          {/* Payment Information */}
-          <div className="space-y-4 p-4 bg-green-50 rounded-lg border border-green-200">
-            <h4 className="font-medium text-green-900">Betaal Informatie</h4>
-            
-            <div className="space-y-2">
-              <Label htmlFor="payment_received_date">Betaal Datum</Label>
-              <Input
-                id="payment_received_date"
-                type="date"
-                value={formData.payment_received_date}
-                onChange={(e) => setFormData(prev => ({ ...prev, payment_received_date: e.target.value }))}
-                className="h-10"
-              />
-              <p className="text-xs text-green-600">Datum waarop de betaling is ontvangen (alleen invullen als deal betaald is)</p>
-            </div>
-          </div>
-
+          {/* Optional Description */}
           <div className="space-y-2">
-            <Label htmlFor="description">Beschrijving</Label>
+            <Label htmlFor="description">Beschrijving (optioneel)</Label>
             <Textarea
               id="description"
               value={formData.description}
