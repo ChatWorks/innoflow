@@ -16,7 +16,10 @@ import {
   Calendar,
   User,
   Target,
-  TrendingUp
+  TrendingUp,
+  Repeat,
+  Clock,
+  Euro
 } from "lucide-react";
 import { EditDealModal } from "../dashboard/EditDealModal";
 
@@ -31,6 +34,11 @@ interface Deal {
   invoice_date?: string;
   payment_due_date?: string;
   payment_received_date?: string;
+  deal_type?: string;
+  monthly_amount?: number;
+  start_date?: string;
+  contract_length?: number;
+  description?: string;
 }
 
 interface DealCardProps {
@@ -193,8 +201,32 @@ export const DealCard = ({ deal, onViewDeal, onDealsUpdate, viewMode }: DealCard
     }
   };
 
+  const getDealTypeInfo = (dealType: string) => {
+    switch (dealType) {
+      case "recurring":
+        return {
+          label: "Maandelijks",
+          icon: Repeat,
+          color: "bg-purple-100 text-purple-800 border-purple-200"
+        };
+      case "one_time":
+        return {
+          label: "Eenmalig",
+          icon: Euro,
+          color: "bg-green-100 text-green-800 border-green-200"
+        };
+      default:
+        return {
+          label: "Eenmalig",
+          icon: Euro,
+          color: "bg-green-100 text-green-800 border-green-200"
+        };
+    }
+  };
+
   const statusConfig = getStatusConfig(deal.status);
   const nextStatus = getNextStatus(deal.status);
+  const dealTypeInfo = getDealTypeInfo(deal.deal_type || 'one_time');
 
   if (viewMode === 'list') {
     return (
@@ -211,7 +243,14 @@ export const DealCard = ({ deal, onViewDeal, onDealsUpdate, viewMode }: DealCard
                   </div>
                 </div>
                 <div className="text-right ml-4">
-                  <p className="font-bold text-xl">{formatCurrency(applyVat(deal.amount))}</p>
+                  <div className="flex flex-col items-end">
+                    <p className="font-bold text-xl">{formatCurrency(applyVat(deal.amount))}</p>
+                    {deal.deal_type === 'recurring' && deal.monthly_amount && (
+                      <p className="text-sm text-muted-foreground">
+                        {formatCurrency(applyVat(deal.monthly_amount))}/maand
+                      </p>
+                    )}
+                  </div>
                   {deal.expected_date && (
                     <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                       <Calendar className="h-3 w-3" />
@@ -222,11 +261,29 @@ export const DealCard = ({ deal, onViewDeal, onDealsUpdate, viewMode }: DealCard
               </div>
               
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                   <Badge className={`${statusConfig.color} border`}>
                     <statusConfig.icon className="h-3 w-3 mr-1" />
                     {statusConfig.label}
                   </Badge>
+                  
+                  <Badge className={`${dealTypeInfo.color} border`}>
+                    <dealTypeInfo.icon className="h-3 w-3 mr-1" />
+                    {dealTypeInfo.label}
+                  </Badge>
+                  
+                  {deal.start_date && deal.deal_type === 'recurring' && (
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      Start: {formatDate(deal.start_date)}
+                    </div>
+                  )}
+                  
+                  {deal.contract_length && deal.deal_type === 'recurring' && (
+                    <span className="text-sm text-muted-foreground">
+                      {deal.contract_length} maanden
+                    </span>
+                  )}
                   
                   {deal.probability && deal.status === 'potential' && (
                     <span className="text-sm text-muted-foreground">
@@ -332,13 +389,24 @@ export const DealCard = ({ deal, onViewDeal, onDealsUpdate, viewMode }: DealCard
 
             <div className="space-y-3">
             <div className="text-center py-2">
-              <p className="font-bold text-2xl">{formatCurrency(applyVat(deal.amount))}</p>
+              <div className="flex flex-col items-center">
+                <p className="font-bold text-2xl">{formatCurrency(applyVat(deal.amount))}</p>
+                {deal.deal_type === 'recurring' && deal.monthly_amount && (
+                  <p className="text-sm text-muted-foreground">
+                    {formatCurrency(applyVat(deal.monthly_amount))}/maand
+                  </p>
+                )}
+              </div>
             </div>
 
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-center gap-2">
               <Badge className={`${statusConfig.color} border`}>
                 <statusConfig.icon className="h-3 w-3 mr-1" />
                 {statusConfig.label}
+              </Badge>
+              <Badge className={`${dealTypeInfo.color} border`}>
+                <dealTypeInfo.icon className="h-3 w-3 mr-1" />
+                {dealTypeInfo.label}
               </Badge>
             </div>
 
@@ -346,6 +414,21 @@ export const DealCard = ({ deal, onViewDeal, onDealsUpdate, viewMode }: DealCard
               <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
                 <Calendar className="h-3 w-3" />
                 <span>Verwacht: {formatDate(deal.expected_date)}</span>
+              </div>
+            )}
+
+            {deal.start_date && deal.deal_type === 'recurring' && (
+              <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
+                <Clock className="h-3 w-3" />
+                <span>Start: {formatDate(deal.start_date)}</span>
+              </div>
+            )}
+
+            {deal.contract_length && deal.deal_type === 'recurring' && (
+              <div className="text-center">
+                <span className="text-sm text-muted-foreground">
+                  Contract: {deal.contract_length} maanden
+                </span>
               </div>
             )}
 
