@@ -6,6 +6,7 @@ import { FixedCostCard } from "@/components/fixed-costs/FixedCostCard";
 import { FixedCostFilters } from "@/components/fixed-costs/FixedCostFilters";
 import { EmptyFixedCostsState } from "@/components/fixed-costs/EmptyFixedCostsState";
 import { FixedCostsLoadingSkeleton } from "@/components/fixed-costs/FixedCostsLoadingSkeleton";
+import { VatToggle } from "@/components/ui/vat-toggle";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -117,13 +118,16 @@ export const FixedCostsPage = () => {
         <div className="mb-8 animate-fade-in">
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-primary/80 p-8 text-white">
             <div className="absolute inset-0 bg-primary/10" />
-            <div className="relative z-10">
-              <h1 className="text-4xl font-bold font-manrope mb-2">
-                Vaste Kosten
-              </h1>
-              <p className="text-primary-foreground/90 text-lg">
-                Beheer je terugkerende uitgaven en abonnementen
-              </p>
+            <div className="relative z-10 flex justify-between items-start">
+              <div>
+                <h1 className="text-4xl font-bold font-manrope mb-2">
+                  Vaste Kosten
+                </h1>
+                <p className="text-primary-foreground/90 text-lg">
+                  Beheer je terugkerende uitgaven en abonnementen
+                </p>
+              </div>
+              <VatToggle />
             </div>
             <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-white/10" />
             <div className="absolute bottom-0 left-0 -mb-8 -ml-8 h-32 w-32 rounded-full bg-white/5" />

@@ -1,6 +1,7 @@
 import { TrendingUp, DollarSign, CheckCircle, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { AddDealModal } from "../dashboard/AddDealModal";
+import { useVat } from "@/contexts/VatContext";
 
 interface Deal {
   id: string;
@@ -18,6 +19,8 @@ interface DealStatisticsProps {
 }
 
 export const DealStatistics = ({ deals, onDealsUpdate }: DealStatisticsProps) => {
+  const { applyVat } = useVat();
+  
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('nl-NL', {
       style: 'currency',
@@ -39,7 +42,7 @@ export const DealStatistics = ({ deals, onDealsUpdate }: DealStatisticsProps) =>
   const stats = [
     {
       title: "Totale Pipeline",
-      value: formatCurrency(totalValue),
+      value: formatCurrency(applyVat(totalValue)),
       icon: TrendingUp,
       description: `${deals.length} deals`,
       color: "bg-gradient-to-r from-primary/10 to-primary/5",
@@ -47,7 +50,7 @@ export const DealStatistics = ({ deals, onDealsUpdate }: DealStatisticsProps) =>
     },
     {
       title: "Bevestigde Waarde",
-      value: formatCurrency(confirmedValue),
+      value: formatCurrency(applyVat(confirmedValue)),
       icon: DollarSign,
       description: "Zekere inkomsten",
       color: "bg-gradient-to-r from-blue-500/10 to-blue-500/5",
@@ -55,7 +58,7 @@ export const DealStatistics = ({ deals, onDealsUpdate }: DealStatisticsProps) =>
     },
     {
       title: "Gerealiseerd",
-      value: formatCurrency(paidValue),
+      value: formatCurrency(applyVat(paidValue)),
       icon: CheckCircle,
       description: "Reeds ontvangen",
       color: "bg-gradient-to-r from-green-500/10 to-green-500/5",

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useVat } from "@/contexts/VatContext";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Eye, 
@@ -41,6 +42,7 @@ interface DealCardProps {
 
 export const DealCard = ({ deal, onViewDeal, onDealsUpdate, viewMode }: DealCardProps) => {
   const { user } = useAuth();
+  const { applyVat } = useVat();
   const { toast } = useToast();
   const [editModalOpen, setEditModalOpen] = useState(false);
 
@@ -209,7 +211,7 @@ export const DealCard = ({ deal, onViewDeal, onDealsUpdate, viewMode }: DealCard
                   </div>
                 </div>
                 <div className="text-right ml-4">
-                  <p className="font-bold text-xl">{formatCurrency(deal.amount)}</p>
+                  <p className="font-bold text-xl">{formatCurrency(applyVat(deal.amount))}</p>
                   {deal.expected_date && (
                     <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                       <Calendar className="h-3 w-3" />
@@ -328,9 +330,9 @@ export const DealCard = ({ deal, onViewDeal, onDealsUpdate, viewMode }: DealCard
             </DropdownMenu>
           </div>
 
-          <div className="space-y-3">
+            <div className="space-y-3">
             <div className="text-center py-2">
-              <p className="font-bold text-2xl">{formatCurrency(deal.amount)}</p>
+              <p className="font-bold text-2xl">{formatCurrency(applyVat(deal.amount))}</p>
             </div>
 
             <div className="flex items-center justify-center">

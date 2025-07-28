@@ -6,6 +6,7 @@ import { DealCard } from "@/components/deals/DealCard";
 import { DealFilters } from "@/components/deals/DealFilters";
 import { EmptyDealsState } from "@/components/deals/EmptyDealsState";
 import { DealsLoadingSkeleton } from "@/components/deals/DealsLoadingSkeleton";
+import { VatToggle } from "@/components/ui/vat-toggle";
 import { useDeals } from "@/hooks/useDeals";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -111,13 +112,16 @@ export const DealsPage = () => {
         <div className="mb-8 animate-fade-in">
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-primary/80 p-8 text-white">
             <div className="absolute inset-0 bg-black/10" />
-            <div className="relative z-10">
-              <h1 className="text-4xl font-bold font-manrope mb-2">
-                Deal Management
-              </h1>
-              <p className="text-primary-foreground/90 text-lg">
-                Beheer je sales pipeline en maximaliseer je omzet
-              </p>
+            <div className="relative z-10 flex justify-between items-start">
+              <div>
+                <h1 className="text-4xl font-bold font-manrope mb-2">
+                  Deal Management
+                </h1>
+                <p className="text-primary-foreground/90 text-lg">
+                  Beheer je sales pipeline en maximaliseer je omzet
+                </p>
+              </div>
+              <VatToggle />
             </div>
             <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-white/10" />
             <div className="absolute bottom-0 left-0 -mb-8 -ml-8 h-32 w-32 rounded-full bg-white/5" />

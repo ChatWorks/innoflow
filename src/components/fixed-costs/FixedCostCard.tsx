@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { useVat } from "@/contexts/VatContext";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   MoreHorizontal, 
@@ -35,6 +36,7 @@ interface FixedCostCardProps {
 }
 
 export const FixedCostCard = ({ fixedCost, onFixedCostsUpdate, viewMode }: FixedCostCardProps) => {
+  const { applyVat } = useVat();
   const { toast } = useToast();
 
   const formatCurrency = (amount: number) => {
@@ -149,9 +151,9 @@ export const FixedCostCard = ({ fixedCost, onFixedCostsUpdate, viewMode }: Fixed
                   </div>
                 </div>
                 <div className="text-right ml-4">
-                  <p className="font-bold text-xl">{formatCurrency(fixedCost.amount)}</p>
+                  <p className="font-bold text-xl">{formatCurrency(applyVat(fixedCost.amount))}</p>
                   <p className="text-sm text-muted-foreground">
-                    {formatCurrency(calculateMonthlyAmount())}/maand
+                    {formatCurrency(applyVat(calculateMonthlyAmount()))}/maand
                   </p>
                 </div>
               </div>
@@ -252,9 +254,9 @@ export const FixedCostCard = ({ fixedCost, onFixedCostsUpdate, viewMode }: Fixed
 
           <div className="space-y-3">
             <div className="text-center py-2">
-              <p className="font-bold text-2xl">{formatCurrency(fixedCost.amount)}</p>
+              <p className="font-bold text-2xl">{formatCurrency(applyVat(fixedCost.amount))}</p>
               <p className="text-sm text-muted-foreground">
-                {formatCurrency(calculateMonthlyAmount())}/maand
+                {formatCurrency(applyVat(calculateMonthlyAmount()))}/maand
               </p>
             </div>
 

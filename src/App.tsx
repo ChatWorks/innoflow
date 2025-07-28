@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { VatProvider } from "@/contexts/VatContext";
 import Index from "./pages/Index";
 import { DealsPage } from "./pages/DealsPage";
 import { FixedCostsPage } from "./pages/FixedCostsPage";
@@ -16,21 +17,23 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/deals" element={<DealsPage />} />
-            <Route path="/fixed-costs" element={<FixedCostsPage />} />
-            <Route path="/goals" element={<GoalsPage />} />
-            <Route path="/ai-advisor" element={<AIAdvisorPage />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <VatProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/deals" element={<DealsPage />} />
+              <Route path="/fixed-costs" element={<FixedCostsPage />} />
+              <Route path="/goals" element={<GoalsPage />} />
+              <Route path="/ai-advisor" element={<AIAdvisorPage />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </VatProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

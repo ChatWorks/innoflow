@@ -2,6 +2,7 @@ import { TrendingDown, Clock, Calendar, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AddFixedCostModal } from "../dashboard/AddFixedCostModal";
+import { useVat } from "@/contexts/VatContext";
 
 interface FixedCost {
   id: string;
@@ -21,6 +22,8 @@ interface FixedCostStatisticsProps {
 }
 
 export const FixedCostStatistics = ({ fixedCosts, onFixedCostsUpdate }: FixedCostStatisticsProps) => {
+  const { applyVat } = useVat();
+  
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('nl-NL', {
       style: 'currency',
@@ -76,7 +79,7 @@ export const FixedCostStatistics = ({ fixedCosts, onFixedCostsUpdate }: FixedCos
   const stats = [
     {
       title: "Maandelijkse Kosten",
-      value: formatCurrency(calculateMonthlyTotal()),
+      value: formatCurrency(applyVat(calculateMonthlyTotal())),
       icon: TrendingDown,
       description: `${fixedCosts.length} actieve kosten`,
       color: "bg-gradient-to-r from-red-500/10 to-red-500/5",
@@ -84,7 +87,7 @@ export const FixedCostStatistics = ({ fixedCosts, onFixedCostsUpdate }: FixedCos
     },
     {
       title: "Jaarlijkse Impact",
-      value: formatCurrency(calculateYearlyTotal()),
+      value: formatCurrency(applyVat(calculateYearlyTotal())),
       icon: Calendar,
       description: "Totale jaarkosten",
       color: "bg-gradient-to-r from-orange-500/10 to-orange-500/5",
