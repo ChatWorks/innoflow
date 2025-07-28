@@ -54,7 +54,7 @@ export const DashboardHeader = ({
                   location.pathname === "/fixed-costs" ? "text-foreground" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                Vaste Kosten
+                Kosten
               </button>
               <button 
                 onClick={() => navigate("/goals")} 
