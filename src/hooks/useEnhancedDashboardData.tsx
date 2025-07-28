@@ -46,6 +46,7 @@ interface EnhancedDashboardData {
   deals: Deal[];
   fixedCosts: FixedCost[];
   cashflowEntries: CashflowEntry[];
+  recurringRevenue: any[];
 }
 
 interface EnhancedDashboardMetrics {
@@ -79,6 +80,7 @@ export const useEnhancedDashboardData = (dateRange: DateRange) => {
     deals: [],
     fixedCosts: [],
     cashflowEntries: [],
+    recurringRevenue: [],
   });
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -122,6 +124,15 @@ export const useEnhancedDashboardData = (dateRange: DateRange) => {
 
       if (cashflowError) throw cashflowError;
 
+      // Fetch recurring revenue for MRR calculations
+      const { data: recurringRevenue, error: recurringError } = await supabase
+        .from("recurring_revenue")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("is_active", true);
+
+      if (recurringError) throw recurringError;
+
       // Create cashflow entries for paid deals if they don't exist
       const paidDeals = (deals || []).filter(deal => 
         deal.status === 'paid' && 
@@ -156,6 +167,7 @@ export const useEnhancedDashboardData = (dateRange: DateRange) => {
         deals: deals || [],
         fixedCosts: fixedCosts || [],
         cashflowEntries: cashflowEntries || [],
+        recurringRevenue: recurringRevenue || []
       });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -258,7 +270,7 @@ export const useEnhancedDashboardData = (dateRange: DateRange) => {
 
   // Generate enhanced cashflow data with forecasting
   const cashflowData = useMemo((): CashflowDataPoint[] => {
-    const { deals, fixedCosts, cashflowEntries } = data;
+    const { deals, fixedCosts, cashflowEntries, recurringRevenue } = data;
     
     // Generate 6 months of historical + 3 months of forecast
     const startDate = subDays(dateRange.from, 150); // ~5 months before
@@ -280,6 +292,20 @@ export const useEnhancedDashboardData = (dateRange: DateRange) => {
       const income = monthCashflow
         .filter(entry => entry.type === "income")
         .reduce((sum, entry) => sum + Number(entry.amount), 0);
+      
+      // Add recurring revenue for this month
+      const mrrIncome = (recurringRevenue || []).reduce((sum, mrr) => {
+        const startDate = parseISO(mrr.start_date);
+        const endDate = mrr.end_date ? parseISO(mrr.end_date) : null;
+        
+        // Check if MRR is active during this month
+        if (startDate <= monthEnd && (!endDate || endDate >= monthStart)) {
+          return sum + Number(mrr.monthly_amount);
+        }
+        return sum;
+      }, 0);
+      
+      const totalIncome = income + mrrIncome;
       
       const expenses = monthCashflow
         .filter(entry => entry.type === "expense")
@@ -317,7 +343,7 @@ export const useEnhancedDashboardData = (dateRange: DateRange) => {
       }, 0);
       
       const totalExpenses = expenses + monthlyFixedCosts;
-      const netCashflow = income - totalExpenses;
+      const netCashflow = totalIncome - totalExpenses;
       
       // Generate forecast for future months
       let forecastData = {};
@@ -345,7 +371,7 @@ export const useEnhancedDashboardData = (dateRange: DateRange) => {
       
       return {
         month: format(month, 'MMM yyyy', { locale: nl }),
-        income,
+        income: totalIncome,
         expenses: totalExpenses,
         netCashflow,
         ...forecastData,

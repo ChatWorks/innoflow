@@ -83,13 +83,12 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
         const startDate = formData.start_date || new Date().toISOString().split('T')[0];
         const monthlyAmount = parseFloat(formData.monthly_amount);
         const contractLength = formData.contract_length ? parseInt(formData.contract_length) : null;
-        const totalAmount = contractLength ? monthlyAmount * contractLength : monthlyAmount * 12; // Default to 12 months if indefinite
         
         const dealData = {
           title: formData.title,
           client_name: formData.client_name,
-          amount: totalAmount, // Show total contract value
-          status: "confirmed", // Always confirmed for MRR
+          amount: monthlyAmount, // Just the monthly amount, not multiplied
+          status: "confirmed",
           payment_received_date: null,
           description: formData.description || null,
           probability: 80,

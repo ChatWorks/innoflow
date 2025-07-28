@@ -72,12 +72,10 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
     setLoading(true);
 
     try {
-      // Calculate total amount for recurring deals
+      // For recurring deals, amount should be just the monthly amount
       let dealAmount = parseFloat(formData.amount);
       if (formData.deal_type === "recurring" && formData.monthly_amount) {
-        const monthlyAmount = parseFloat(formData.monthly_amount);
-        const contractLength = formData.contract_length ? parseInt(formData.contract_length) : null;
-        dealAmount = contractLength ? monthlyAmount * contractLength : monthlyAmount * 12;
+        dealAmount = parseFloat(formData.monthly_amount); // Just monthly amount, not multiplied
       }
 
       const updateData: any = {
@@ -90,7 +88,7 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
         probability: formData.status === "potential" ? 50 : formData.status === "confirmed" ? 80 : 100,
         deal_type: formData.deal_type,
         monthly_amount: formData.deal_type === "recurring" ? parseFloat(formData.monthly_amount) : null,
-        contract_length: formData.deal_type === "recurring" ? parseInt(formData.contract_length) : null,
+        contract_length: formData.deal_type === "recurring" && formData.contract_length ? parseInt(formData.contract_length) : null,
         start_date: formData.deal_type === "recurring" ? formData.start_date : null
       };
 
