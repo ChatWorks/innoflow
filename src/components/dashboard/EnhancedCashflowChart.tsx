@@ -67,7 +67,7 @@ export const EnhancedCashflowChart = ({
       setData(propData);
       setLoading(false);
     }
-  }, [propData, showRevenueBreakdown, applyVat]); // Added applyVat dependency
+  }, [propData, showRevenueBreakdown]); // Removed applyVat dependency since we apply it in display
 
   const generateEnhancedData = async () => {
     try {
@@ -93,7 +93,7 @@ export const EnhancedCashflowChart = ({
         
         const isHistorical = i >= 0;
         
-        // Calculate one-time revenue (store with BTW already applied)
+        // Calculate one-time revenue (store as base amount - BTW will be applied when displaying)
         const oneTimeRevenue = deals
           ?.filter(deal => {
             if (!isHistorical) return 0; // No historical data for future
@@ -102,19 +102,19 @@ export const EnhancedCashflowChart = ({
             return paymentDate.getMonth() === monthDate.getMonth() && 
                    paymentDate.getFullYear() === monthDate.getFullYear();
           })
-          .reduce((sum, deal) => sum + applyVat(Number(deal.amount)), 0) || 0;
+          .reduce((sum, deal) => sum + Number(deal.amount), 0) || 0;
 
-        // Calculate recurring revenue (store with BTW already applied)
+        // Calculate recurring revenue (store as base amount - BTW will be applied when displaying)
         const mrrAmount = recurringRevenue
           ?.filter(mrr => {
             const startDate = new Date(mrr.start_date);
             const endDate = mrr.end_date ? new Date(mrr.end_date) : new Date(2030, 11, 31);
             return monthDate >= startDate && monthDate <= endDate;
           })
-          .reduce((sum, mrr) => sum + applyVat(Number(mrr.monthly_amount)), 0) || 0;
+          .reduce((sum, mrr) => sum + Number(mrr.monthly_amount), 0) || 0;
 
         const totalIncome = oneTimeRevenue + mrrAmount;
-        const expenses = applyVat(2000); // Mock expenses with BTW applied
+        const expenses = 2000; // Mock expenses as base amount
         
         dataPoints.push({
           month: monthStr,
@@ -230,9 +230,24 @@ export const EnhancedCashflowChart = ({
     }
   };
 
-  // Use data as-is (BTW is already applied by parent components when toggle is on)
-  const zoomedData = getZoomedData();
-  const latestData = zoomedData[zoomedData.length - 1];
+  // Apply BTW to display data regardless of source (propData or generated data)
+  const getDisplayData = () => {
+    const zoomedData = getZoomedData();
+    return zoomedData.map(point => ({
+      ...point,
+      income: applyVat(point.income),
+      expenses: applyVat(point.expenses),
+      netCashflow: applyVat(point.netCashflow),
+      oneTimeRevenue: applyVat(point.oneTimeRevenue || 0),
+      recurringRevenue: applyVat(point.recurringRevenue || 0),
+      forecastIncome: point.forecastIncome ? applyVat(point.forecastIncome) : undefined,
+      forecastExpenses: point.forecastExpenses ? applyVat(point.forecastExpenses) : undefined,
+      forecastNetCashflow: point.forecastNetCashflow ? applyVat(point.forecastNetCashflow) : undefined
+    }));
+  };
+
+  const displayData = getDisplayData();
+  const latestData = displayData[displayData.length - 1];
   const trend = latestData?.netCashflow >= 0 ? "positive" : "negative";
 
   if (loading) {
@@ -325,7 +340,7 @@ export const EnhancedCashflowChart = ({
         <div className="h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
-              data={zoomedData}
+              data={displayData}
               margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
               onMouseMove={(data) => setHoveredData(data)}
               onMouseLeave={() => setHoveredData(null)}
