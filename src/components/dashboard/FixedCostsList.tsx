@@ -19,6 +19,7 @@ interface FixedCost {
   end_date?: string | null;
   description?: string;
   is_active: boolean;
+  cost_type: 'recurring' | 'one_time';
 }
 
 export const FixedCostsList = () => {
@@ -39,7 +40,10 @@ export const FixedCostsList = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setFixedCosts(data || []);
+      setFixedCosts((data || []).map(item => ({
+        ...item,
+        cost_type: (item.cost_type || 'recurring') as 'recurring' | 'one_time'
+      })));
     } catch (error) {
       console.error("Error fetching fixed costs:", error);
       toast({

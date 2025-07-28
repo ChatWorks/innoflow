@@ -14,6 +14,7 @@ interface FixedCost {
   end_date?: string | null;
   description?: string;
   is_active: boolean;
+  cost_type: 'recurring' | 'one_time';
 }
 
 interface FixedCostStatisticsProps {
@@ -35,6 +36,9 @@ export const FixedCostStatistics = ({ fixedCosts, onFixedCostsUpdate }: FixedCos
 
   const calculateMonthlyTotal = () => {
     return fixedCosts.reduce((total, cost) => {
+      if ((cost.cost_type || 'recurring') === 'one_time') {
+        return total; // One-time costs don't count toward monthly recurring totals
+      }
       let monthlyAmount = cost.amount;
       if (cost.frequency === "yearly") {
         monthlyAmount = cost.amount / 12;
@@ -47,6 +51,9 @@ export const FixedCostStatistics = ({ fixedCosts, onFixedCostsUpdate }: FixedCos
 
   const calculateYearlyTotal = () => {
     return fixedCosts.reduce((total, cost) => {
+      if ((cost.cost_type || 'recurring') === 'one_time') {
+        return total + cost.amount; // One-time costs count once toward yearly total
+      }
       let yearlyAmount = cost.amount;
       if (cost.frequency === "monthly") {
         yearlyAmount = cost.amount * 12;
@@ -81,7 +88,7 @@ export const FixedCostStatistics = ({ fixedCosts, onFixedCostsUpdate }: FixedCos
       title: "Maandelijkse Kosten",
       value: formatCurrency(applyVat(calculateMonthlyTotal())),
       icon: TrendingDown,
-      description: `${fixedCosts.length} actieve kosten`,
+      description: `${fixedCosts.filter(c => (c.cost_type || 'recurring') !== 'one_time').length} terugkerende kosten`,
       color: "bg-gradient-to-r from-red-500/10 to-red-500/5",
       iconColor: "text-red-600"
     },

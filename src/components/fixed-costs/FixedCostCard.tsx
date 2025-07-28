@@ -27,6 +27,7 @@ interface FixedCost {
   end_date?: string | null;
   description?: string;
   is_active: boolean;
+  cost_type: 'recurring' | 'one_time';
 }
 
 interface FixedCostCardProps {
@@ -56,7 +57,15 @@ export const FixedCostCard = ({ fixedCost, onFixedCostsUpdate, viewMode }: Fixed
     });
   };
 
-  const getFrequencyConfig = (frequency: string) => {
+  const getFrequencyConfig = (frequency: string, cost_type: string) => {
+    if (cost_type === 'one_time') {
+      return {
+        label: "Eenmalig",
+        color: "bg-orange-100 text-orange-800 border-orange-200",
+        icon: Calendar
+      };
+    }
+
     switch (frequency) {
       case "monthly":
         return {
@@ -67,13 +76,13 @@ export const FixedCostCard = ({ fixedCost, onFixedCostsUpdate, viewMode }: Fixed
       case "quarterly":
         return {
           label: "Kwartaal",
-          color: "bg-orange-100 text-orange-800 border-orange-200",
+          color: "bg-green-100 text-green-800 border-green-200",
           icon: Calendar
         };
       case "yearly":
         return {
           label: "Jaarlijks",
-          color: "bg-green-100 text-green-800 border-green-200",
+          color: "bg-purple-100 text-purple-800 border-purple-200",
           icon: Clock
         };
       default:
@@ -99,6 +108,9 @@ export const FixedCostCard = ({ fixedCost, onFixedCostsUpdate, viewMode }: Fixed
   };
 
   const calculateMonthlyAmount = () => {
+    if (fixedCost.cost_type === 'one_time') {
+      return 0; // One-time costs don't have a monthly equivalent
+    }
     let monthlyAmount = fixedCost.amount;
     if (fixedCost.frequency === "yearly") {
       monthlyAmount = fixedCost.amount / 12;
@@ -119,7 +131,7 @@ export const FixedCostCard = ({ fixedCost, onFixedCostsUpdate, viewMode }: Fixed
 
       toast({
         title: "Verwijderd",
-        description: "Vaste kosten zijn verwijderd.",
+        description: "Kosten zijn verwijderd.",
       });
 
       onFixedCostsUpdate?.();
@@ -127,13 +139,13 @@ export const FixedCostCard = ({ fixedCost, onFixedCostsUpdate, viewMode }: Fixed
       console.error("Error deleting fixed cost:", error);
       toast({
         title: "Fout",
-        description: "Kon vaste kosten niet verwijderen.",
+        description: "Kon kosten niet verwijderen.",
         variant: "destructive",
       });
     }
   };
 
-  const frequencyConfig = getFrequencyConfig(fixedCost.frequency);
+  const frequencyConfig = getFrequencyConfig(fixedCost.frequency, fixedCost.cost_type);
   const isExpiringSoon = fixedCost.end_date && new Date(fixedCost.end_date) <= new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
 
   if (viewMode === 'list') {
@@ -152,9 +164,11 @@ export const FixedCostCard = ({ fixedCost, onFixedCostsUpdate, viewMode }: Fixed
                 </div>
                 <div className="text-right ml-4">
                   <p className="font-bold text-xl">{formatCurrency(applyVat(fixedCost.amount))}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {formatCurrency(applyVat(calculateMonthlyAmount()))}/maand
-                  </p>
+                  {fixedCost.cost_type === 'recurring' && (
+                    <p className="text-sm text-muted-foreground">
+                      {formatCurrency(applyVat(calculateMonthlyAmount()))}/maand
+                    </p>
+                  )}
                 </div>
               </div>
               
@@ -200,7 +214,7 @@ export const FixedCostCard = ({ fixedCost, onFixedCostsUpdate, viewMode }: Fixed
               {fixedCost.start_date && (
                 <div className="flex items-center gap-1 text-sm text-muted-foreground mt-2">
                   <Calendar className="h-3 w-3" />
-                  <span>Start: {formatDate(fixedCost.start_date)}</span>
+                  <span>{fixedCost.cost_type === 'one_time' ? 'Datum:' : 'Start:'} {formatDate(fixedCost.start_date)}</span>
                   {fixedCost.end_date && (
                     <span className="ml-4">
                       Einde: {formatDate(fixedCost.end_date)}
@@ -255,9 +269,11 @@ export const FixedCostCard = ({ fixedCost, onFixedCostsUpdate, viewMode }: Fixed
           <div className="space-y-3">
             <div className="text-center py-2">
               <p className="font-bold text-2xl">{formatCurrency(applyVat(fixedCost.amount))}</p>
-              <p className="text-sm text-muted-foreground">
-                {formatCurrency(applyVat(calculateMonthlyAmount()))}/maand
-              </p>
+              {fixedCost.cost_type === 'recurring' && (
+                <p className="text-sm text-muted-foreground">
+                  {formatCurrency(applyVat(calculateMonthlyAmount()))}/maand
+                </p>
+              )}
             </div>
 
             <div className="flex flex-wrap gap-2 justify-center">
@@ -285,7 +301,7 @@ export const FixedCostCard = ({ fixedCost, onFixedCostsUpdate, viewMode }: Fixed
               <div className="text-center text-sm text-muted-foreground">
                 <div className="flex items-center justify-center gap-1">
                   <Calendar className="h-3 w-3" />
-                  <span>Start: {formatDate(fixedCost.start_date)}</span>
+                  <span>{fixedCost.cost_type === 'one_time' ? 'Datum:' : 'Start:'} {formatDate(fixedCost.start_date)}</span>
                 </div>
                 {fixedCost.end_date && (
                   <div className="mt-1">

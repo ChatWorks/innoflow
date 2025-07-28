@@ -23,6 +23,7 @@ interface FixedCost {
   end_date?: string | null;
   description?: string;
   is_active: boolean;
+  cost_type: 'recurring' | 'one_time';
 }
 
 interface EditFixedCostModalProps {
@@ -43,7 +44,8 @@ export const EditFixedCostModal = ({ fixedCost, onSuccess }: EditFixedCostModalP
     frequency: fixedCost.frequency,
     start_date: new Date(fixedCost.start_date),
     end_date: fixedCost.end_date ? new Date(fixedCost.end_date) : undefined,
-    description: fixedCost.description || ""
+    description: fixedCost.description || "",
+    cost_type: (fixedCost.cost_type || 'recurring') as 'recurring' | 'one_time'
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,10 +60,11 @@ export const EditFixedCostModal = ({ fixedCost, onSuccess }: EditFixedCostModalP
           name: formData.name,
           category: formData.category,
           amount: parseFloat(formData.amount),
-          frequency: formData.frequency,
+          frequency: formData.cost_type === 'one_time' ? 'one_time' : formData.frequency,
           start_date: formData.start_date.toISOString().split('T')[0],
           end_date: formData.end_date ? formData.end_date.toISOString().split('T')[0] : null,
           description: formData.description || null,
+          cost_type: formData.cost_type,
           updated_at: new Date().toISOString()
         })
         .eq("id", fixedCost.id);
@@ -70,7 +73,7 @@ export const EditFixedCostModal = ({ fixedCost, onSuccess }: EditFixedCostModalP
 
       toast({
         title: "Bijgewerkt",
-        description: "Vaste kosten zijn succesvol bijgewerkt.",
+        description: "Kosten zijn succesvol bijgewerkt.",
       });
 
       setOpen(false);
@@ -79,7 +82,7 @@ export const EditFixedCostModal = ({ fixedCost, onSuccess }: EditFixedCostModalP
       console.error("Error updating fixed cost:", error);
       toast({
         title: "Fout",
-        description: "Kon vaste kosten niet bijwerken.",
+        description: "Kon kosten niet bijwerken.",
         variant: "destructive",
       });
     } finally {
@@ -97,10 +100,27 @@ export const EditFixedCostModal = ({ fixedCost, onSuccess }: EditFixedCostModalP
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Vaste Kosten Bewerken</DialogTitle>
+          <DialogTitle>Kosten Bewerken</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="cost_type">Type Kosten *</Label>
+            <Select
+              value={formData.cost_type}
+              onValueChange={(value: 'recurring' | 'one_time') => setFormData(prev => ({ ...prev, cost_type: value, frequency: value === 'one_time' ? 'one_time' : prev.frequency }))}
+              required
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecteer type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recurring">🔄 Terugkerende kosten</SelectItem>
+                <SelectItem value="one_time">📅 Eenmalige kosten</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
           <div className="grid grid-cols-1 gap-4">
             <div>
               <Label htmlFor="name">Naam</Label>
@@ -148,27 +168,29 @@ export const EditFixedCostModal = ({ fixedCost, onSuccess }: EditFixedCostModalP
                 />
               </div>
 
-              <div>
-                <Label htmlFor="frequency">Frequentie</Label>
-                <Select
-                  value={formData.frequency}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, frequency: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecteer frequentie" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="monthly">Maandelijks</SelectItem>
-                    <SelectItem value="quarterly">Kwartaal</SelectItem>
-                    <SelectItem value="yearly">Jaarlijks</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {formData.cost_type === 'recurring' && (
+                <div>
+                  <Label htmlFor="frequency">Frequentie</Label>
+                  <Select
+                    value={formData.frequency}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, frequency: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecteer frequentie" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Maandelijks</SelectItem>
+                      <SelectItem value="quarterly">Kwartaal</SelectItem>
+                      <SelectItem value="yearly">Jaarlijks</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Startdatum</Label>
+                <Label>{formData.cost_type === 'one_time' ? 'Datum' : 'Startdatum'}</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button

@@ -20,6 +20,7 @@ interface FixedCost {
   end_date?: string | null;
   description?: string;
   is_active: boolean;
+  cost_type: 'recurring' | 'one_time';
 }
 
 export const FixedCostsPage = () => {
@@ -121,10 +122,10 @@ export const FixedCostsPage = () => {
             <div className="relative z-10 flex justify-between items-start">
               <div>
                 <h1 className="text-4xl font-bold font-manrope mb-2">
-                  Vaste Kosten
+                  Kosten
                 </h1>
                 <p className="text-primary-foreground/90 text-lg">
-                  Beheer je terugkerende uitgaven en abonnementen
+                  Beheer je eenmalige en terugkerende uitgaven
                 </p>
               </div>
               <VatToggle />

@@ -14,6 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_conversation_titles: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          id: string
+          last_activity: string
+          message_count: number | null
+          title: string
+          total_tokens: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          id?: string
+          last_activity?: string
+          message_count?: number | null
+          title?: string
+          total_tokens?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          last_activity?: string
+          message_count?: number | null
+          title?: string
+          total_tokens?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_conversations: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          financial_context: Json | null
+          id: string
+          role: string
+          timeframe: string | null
+          tokens_used: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          financial_context?: Json | null
+          id?: string
+          role: string
+          timeframe?: string | null
+          tokens_used?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          financial_context?: Json | null
+          id?: string
+          role?: string
+          timeframe?: string | null
+          tokens_used?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       budgets: {
         Row: {
           alert_threshold: number | null
@@ -333,6 +408,7 @@ export type Database = {
         Row: {
           amount: number
           category: string
+          cost_type: string
           created_at: string
           description: string | null
           end_date: string | null
@@ -347,6 +423,7 @@ export type Database = {
         Insert: {
           amount: number
           category: string
+          cost_type?: string
           created_at?: string
           description?: string | null
           end_date?: string | null
@@ -361,6 +438,7 @@ export type Database = {
         Update: {
           amount?: number
           category?: string
+          cost_type?: string
           created_at?: string
           description?: string | null
           end_date?: string | null
