@@ -72,16 +72,16 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
     setLoading(true);
 
     try {
-      // For recurring deals, amount should be just the monthly amount
+      // ✅ Voor MRR deals: amount = monthly_amount (GEEN vermenigvuldiging)
       let dealAmount = parseFloat(formData.amount);
       if (formData.deal_type === "recurring" && formData.monthly_amount) {
-        dealAmount = parseFloat(formData.monthly_amount); // Just monthly amount, not multiplied
+        dealAmount = parseFloat(formData.monthly_amount); // ✅ amount = monthly_amount
       }
 
       const updateData: any = {
         title: formData.title,
         client_name: formData.client_name,
-        amount: dealAmount,
+        amount: dealAmount, // ✅ Voor MRR = monthly_amount
         status: formData.status,
         payment_received_date: formData.payment_received_date || null,
         description: formData.description || null,
@@ -97,7 +97,7 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
         await createCashflowEntry(deal.id, parseFloat(formData.amount), formData.title);
       }
 
-      // If it's a recurring deal and status became confirmed/paid, create/update recurring revenue entry
+      // ✅ Voor MRR deals: update zowel deals ALS recurring_revenue tabel
       if (formData.deal_type === "recurring" && (formData.status === "confirmed" || formData.status === "paid") && formData.monthly_amount) {
         const contractLength = formData.contract_length ? parseInt(formData.contract_length) : null;
         const startDate = formData.start_date || new Date().toISOString().split('T')[0];

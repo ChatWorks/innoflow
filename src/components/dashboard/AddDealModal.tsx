@@ -87,8 +87,8 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
         const dealData = {
           title: formData.title,
           client_name: formData.client_name,
-          amount: monthlyAmount, // Just the monthly amount, not multiplied
-          status: "confirmed",
+          amount: monthlyAmount, // ✅ amount = monthly_amount (NIET vermenigvuldigd)
+          status: "confirmed", // ✅ Status automatisch "confirmed" (NIET "paid")
           payment_received_date: null,
           description: formData.description || null,
           probability: 80,
@@ -107,7 +107,7 @@ export const AddDealModal = ({ onSuccess }: AddDealModalProps) => {
 
         if (error) throw error;
 
-        // Create recurring revenue entry
+        // ✅ ALTIJD recurring_revenue entry aanmaken voor MRR deals
         if (dealResult) {
           await createRecurringRevenueEntry(dealResult.id, monthlyAmount, startDate, contractLength);
         }

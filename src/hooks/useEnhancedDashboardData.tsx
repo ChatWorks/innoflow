@@ -289,23 +289,24 @@ export const useEnhancedDashboardData = (dateRange: DateRange) => {
         return entryDate >= monthStart && entryDate <= monthEnd;
       });
       
-      const income = monthCashflow
+      // ✅ Cashflow berekening: eenmalige deals via payment_received_date
+      const oneTimeIncome = monthCashflow
         .filter(entry => entry.type === "income")
         .reduce((sum, entry) => sum + Number(entry.amount), 0);
       
-      // Add recurring revenue for this month
+      // ✅ MRR berekening: gebruik recurring_revenue tabel voor MRR projecties
       const mrrIncome = (recurringRevenue || []).reduce((sum, mrr) => {
         const startDate = parseISO(mrr.start_date);
         const endDate = mrr.end_date ? parseISO(mrr.end_date) : null;
         
-        // Check if MRR is active during this month
+        // ✅ Tel maandelijks bedrag op per maand tussen start_date en end_date
         if (startDate <= monthEnd && (!endDate || endDate >= monthStart)) {
-          return sum + Number(mrr.monthly_amount);
+          return sum + Number(mrr.monthly_amount); // ✅ Gewoon monthly_amount, geen vermenigvuldiging
         }
         return sum;
       }, 0);
       
-      const totalIncome = income + mrrIncome;
+      const totalIncome = oneTimeIncome + mrrIncome; // ✅ Combineer beide income streams
       
       const expenses = monthCashflow
         .filter(entry => entry.type === "expense")
