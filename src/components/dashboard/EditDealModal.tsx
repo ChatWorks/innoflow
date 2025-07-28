@@ -306,8 +306,8 @@ export const EditDealModal = ({ deal, open, onOpenChange, onSuccess }: EditDealM
             </Select>
           </div>
 
-          {/* Payment Information - Only show for one-time projects AND when status is paid/invoiced */}
-          {(formData.deal_type === "one_time" && (formData.status === "paid" || formData.status === "invoiced")) && (
+          {/* Payment Information - Only show for one-time projects or when deal is paid */}
+          {(formData.deal_type === "one_time" || formData.status === "paid") && (
             <div className="space-y-4 p-4 bg-green-50 rounded-lg border border-green-200">
               <h4 className="font-medium text-green-900">Betaal Informatie</h4>
               

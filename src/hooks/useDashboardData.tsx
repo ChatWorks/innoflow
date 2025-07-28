@@ -146,20 +146,21 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
         console.error("Error fetching recurring revenue:", recurringError);
       }
 
+      // Filter deals based on correct criteria for each deal type
       const filteredDeals = (deals || []).filter(deal => {
-        // Voor eenmalige deals: gebruik payment_received_date (BESTAANDE LOGICA BEHOUDEN)
-        if (deal.payment_received_date) {
+        // Voor eenmalige deals: gebruik payment_received_date
+        if (deal.deal_type === 'one_time' && deal.payment_received_date) {
           const paymentDate = new Date(deal.payment_received_date);
           return paymentDate >= start && paymentDate <= end;
         }
         
-        // NIEUWE LOGICA: Voor MRR deals gebruik start_date
-        if (deal.deal_type === 'recurring' && deal.start_date && (deal.status === 'confirmed' || deal.status === 'paid')) {
+        // Voor MRR deals: gebruik start_date en check of actief in periode
+        if (deal.deal_type === 'recurring' && deal.start_date) {
           const startDate = new Date(deal.start_date);
-          return startDate <= end; // Toon als deal actief is in periode
+          return startDate <= end; // MRR deal is actief als het gestart is voor/tijdens periode
         }
         
-        // BESTAANDE LOGICA BEHOUDEN: Voor unpaid deals, use expected_date or payment_due_date
+        // Fallback voor andere deals
         if (deal.expected_date) {
           const expectedDate = new Date(deal.expected_date);
           return expectedDate >= start && expectedDate <= end;
@@ -195,23 +196,28 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
   const calculateMetrics = useCallback((): DashboardMetrics => {
     const { start, end } = getDateRange(currentDate, period);
 
+    // Calculate income from deals with correct MRR logic
     const monthlyIncome = data.deals
+      .filter(deal => {
+        // Eenmalige deals: alleen 'paid'
+        if (deal.deal_type === 'one_time') {
+          return deal.status === 'paid';
+        }
+        // MRR deals: 'confirmed' of 'paid'
+        if (deal.deal_type === 'recurring') {
+          return deal.status === 'confirmed' || deal.status === 'paid';
+        }
+        return false;
+      })
       .reduce((sum, deal) => {
-        // BESTAANDE LOGICA: Eenmalige betaalde deals
-        if (deal.deal_type === 'one_time' && deal.status === 'paid') {
+        // Voor eenmalige deals: gebruik amount
+        if (deal.deal_type === 'one_time') {
           return sum + Number(deal.amount);
         }
-        
-        // NIEUWE LOGICA: MRR deals (confirmed of paid)
-        if (deal.deal_type === 'recurring' && (deal.status === 'confirmed' || deal.status === 'paid')) {
+        // Voor MRR deals: gebruik monthly_amount
+        if (deal.deal_type === 'recurring') {
           return sum + Number(deal.monthly_amount || 0);
         }
-        
-        // FALLBACK: Oude logica voor deals zonder deal_type
-        if (!deal.deal_type && deal.status === 'paid') {
-          return sum + Number(deal.amount);
-        }
-        
         return sum;
       }, 0);
 
@@ -309,14 +315,15 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
         return false;
       });
 
+      // Calculate income with proper MRR logic
       let income = 0;
 
-      // BESTAANDE LOGICA: Eenmalige betaalde deals
+      // Eenmalige deals
       income += intervalDeals
         .filter(deal => deal.deal_type === 'one_time' && deal.status === 'paid')
         .reduce((sum, deal) => sum + Number(deal.amount), 0);
 
-      // NIEUWE LOGICA: MRR deals - voeg maandelijks bedrag toe per periode
+      // MRR deals - voeg maandelijks bedrag toe als deal actief is in dit interval
       income += intervalDeals
         .filter(deal => deal.deal_type === 'recurring' && (deal.status === 'confirmed' || deal.status === 'paid'))
         .reduce((sum, deal) => {
@@ -329,11 +336,6 @@ export const useDashboardData = (period: TimePeriod, currentDate: Date) => {
           }
           return sum;
         }, 0);
-
-      // FALLBACK: Oude logica voor deals zonder deal_type
-      income += intervalDeals
-        .filter(deal => !deal.deal_type && deal.status === 'paid')
-        .reduce((sum, deal) => sum + Number(deal.amount), 0);
 
       // Calculate fixed costs for this interval
       const intervalStart = new Date(date);
